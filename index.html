@@ -44,8 +44,9 @@ h2 { font-family: var(--serif); font-weight: 400; font-size: 26px; line-height: 
 .head { display: flex; flex-direction: column; }
 
 /* tabs */
-.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
-.tab { border: .5px solid var(--mist); background: transparent; color: var(--tx2); padding: 8px 20px; border-radius: 40px; font-size: 14px; transition: background .15s, color .15s; }
+.tabs { display: flex; gap: 6px; flex-wrap: nowrap; }
+@media (max-width: 420px) { .tab { padding: 8px 11px !important; font-size: 13px !important; } }
+.tab { border: .5px solid var(--mist); background: transparent; color: var(--tx2); padding: 8px 15px; border-radius: 40px; font-size: 14px; transition: background .15s, color .15s; }
 .tab:hover { background: var(--tint); }
 .tab[aria-selected="true"] { background: var(--purple); border-color: var(--purple); color: var(--tx); }
 
@@ -172,6 +173,32 @@ table.g { border-collapse: separate; border-spacing: 0; }
 .stack { display: flex; flex-direction: column; gap: 14px; }
 .status { text-align: center; font-size: 12px; color: var(--muted); margin: 0; min-height: 1.4em; }
 .status.err { color: var(--gold); }
+/* path: статусы и награды */
+.lvbar { height: 6px; background: var(--mist); border-radius: 3px; overflow: hidden; }
+.lvbar i { display: block; height: 100%; background: linear-gradient(90deg, var(--purple), var(--glow)); border-radius: 3px; transition: width .4s; }
+.stname { font-family: var(--serif); font-size: 38px; line-height: 1.1; margin: 2px 0 0; }
+.levels { display: flex; gap: 8px; flex-wrap: wrap; }
+.lv { border: .5px solid var(--mist); border-radius: 40px; padding: 3px 14px; font-size: 12px; color: var(--muted); }
+.lv.past { color: var(--tx2); border-color: var(--purple-dark); }
+.lv.on { background: var(--purple); border-color: var(--purple); color: var(--tx); }
+.pstats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.pstat { background: var(--dusk); border-radius: 12px; padding: 12px 14px; }
+.pstat b { display: block; font-family: var(--serif); font-size: 30px; font-weight: 500; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.pstat span { font-size: 12px; color: var(--muted); }
+.agrid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.ach { border: .5px solid var(--mist); border-radius: 12px; padding: 14px; background: var(--depth); display: flex; flex-direction: column; gap: 6px; opacity: .65; min-width: 0; }
+.ach.got { opacity: 1; background: var(--dusk); border-color: var(--glow); box-shadow: 0 0 18px rgba(155,127,236,.2); }
+.ach .bd { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--mist); display: grid; place-items: center; color: var(--tx); }
+.ach.got .bd { background: var(--purple); border-color: var(--purple); }
+.ach .bd svg { width: 13px; height: 13px; display: none; }
+.ach.got .bd svg { display: block; }
+.ach .nm { font-family: var(--serif); font-size: 21px; line-height: 1.2; }
+.ach .ds { font-size: 12px; color: var(--muted); line-height: 1.45; }
+.ach .pg { height: 4px; background: var(--mist); border-radius: 2px; overflow: hidden; margin-top: auto; }
+.ach .pg i { display: block; height: 100%; background: var(--glow); }
+.ach .pv { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px) + var(--tg-safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); background: var(--dusk); border: .5px solid var(--glow); box-shadow: 0 0 24px rgba(155,127,236,.35); border-radius: 12px; padding: 12px 20px; font-size: 14px; max-width: min(92vw, 420px); text-align: center; white-space: pre-line; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 50; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
 @media (max-width: 380px) { .srow .icon-btn { width: 32px; height: 32px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
@@ -187,6 +214,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
   <main id="view" class="stack"></main>
   <p class="status" id="status" role="status"></p>
 </div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 (function () {
@@ -198,7 +226,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
   var DEFAULTS = ['Утренняя настройка Рейки','Медитация','Обращение к Роду','Запись благодарности дню','Вода и заземление','Прогулка на воздухе','Чтение 10 страниц','Ритуал дня','Растяжка или тренировка','Сон до 23:00'];
   var DEMO_P = [.85,.75,.65,.7,.8,.55,.6,.7,.45,.65];
   var MAXH = 12;
-  var TABS = ['today', 'month', 'habits'];
+  var TABS = ['today', 'month', 'habits', 'path'];
   var CHECK = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   var pad = function (n) { return String(n).padStart(2, '0'); };
@@ -319,6 +347,108 @@ table.g { border-collapse: separate; border-spacing: 0; }
     return best;
   }
 
+  /* ---------- путь: статусы, серии, награды ---------- */
+  var LEVELS = [{ n: 'Росток', d: 0 }, { n: 'Ветвь', d: 7 }, { n: 'Крона', d: 21 }, { n: 'Древо', d: 50 }, { n: 'Хранительница', d: 100 }];
+  var ACH = [
+    { id: 'first', t: 'Первый шаг', d: 'Первая отметка практики', v: function (P) { return P.marks; }, g: 1 },
+    { id: 's3', t: 'Три дня подряд', d: 'Практика три дня без пропуска', v: function (P) { return P.best; }, g: 3 },
+    { id: 's7', t: 'Неделя в ритме', d: 'Семь дней подряд с отметкой', v: function (P) { return P.best; }, g: 7 },
+    { id: 's14', t: 'Две недели', d: 'Четырнадцать дней подряд', v: function (P) { return P.best; }, g: 14 },
+    { id: 's30', t: 'Месяц практики', d: 'Тридцать дней подряд', v: function (P) { return P.best; }, g: 30 },
+    { id: 'full1', t: 'Полный день', d: 'Все практики отмечены за один день', v: function (P) { return P.full; }, g: 1 },
+    { id: 'full5', t: 'Пять полных дней', d: 'Пять дней, когда отмечены все практики', v: function (P) { return P.full; }, g: 5 },
+    { id: 'week1', t: 'Неделя без пропусков', d: 'Каждый день недели, с понедельника по воскресенье, с отметкой', v: function (P) { return P.weeks; }, g: 1 },
+    { id: 'm80', t: 'Месяц в потоке', d: 'Выполнено 80% практик к этому дню месяца', v: function (P) { return P.month80 ? 1 : 0; }, g: 1 },
+    { id: 'm100', t: 'Сто отметок', d: 'Сто отмеченных практик', v: function (P) { return P.marks; }, g: 100 },
+    { id: 'm300', t: 'Триста отметок', d: 'Триста отмеченных практик', v: function (P) { return P.marks; }, g: 300 }
+  ];
+  function dkey(dt) { return dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate()); }
+  function dayMap() {
+    var map = {};
+    if (S.demo) return map;
+    Object.keys(S.checks).forEach(function (k) {
+      var p = k.split('-'), y = +p[0], m = +p[1] - 1, D = dim(y, m), o = S.checks[k] || {};
+      for (var d = 1; d <= D; d++) {
+        var c = 0;
+        S.habits.forEach(function (h) { if (((o[h.id] | 0) & (1 << (d - 1))) !== 0) c++; });
+        if (c) map[y + '-' + pad(m + 1) + '-' + pad(d)] = c;
+      }
+    });
+    return map;
+  }
+  function progress() {
+    var map = dayMap(), n = S.habits.length, keys = Object.keys(map).sort();
+    var P = { days: keys.length, marks: 0, full: 0, streak: 0, best: 0, weeks: 0, month80: false };
+    keys.forEach(function (k) { P.marks += map[k]; if (n && map[k] >= n) P.full++; });
+    var run = 0, prev = null;
+    keys.forEach(function (k) {
+      var p = k.split('-'), dt = new Date(+p[0], +p[1] - 1, +p[2]);
+      if (prev && Math.round((dt - prev) / 864e5) === 1) run++; else run = 1;
+      if (run > P.best) P.best = run;
+      prev = dt;
+    });
+    var cur = new Date(TY, TM, TD);
+    if (!map[dkey(cur)]) cur.setDate(cur.getDate() - 1);
+    while (map[dkey(cur)] && P.streak < 1000) { P.streak++; cur.setDate(cur.getDate() - 1); }
+    var seen = {};
+    keys.forEach(function (k) {
+      var p = k.split('-'), dt = new Date(+p[0], +p[1] - 1, +p[2]);
+      var mon = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() - ((dt.getDay() + 6) % 7)), mk = dkey(mon);
+      if (seen[mk]) return; seen[mk] = 1;
+      for (var i = 0; i < 7; i++) { if (!map[dkey(new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i))]) return; }
+      P.weeks++;
+    });
+    Object.keys(S.checks).forEach(function (k) {
+      var p = k.split('-'), y = +p[0], m = +p[1] - 1, el = elapsedDays(y, m), o = S.checks[k] || {};
+      if (!n || el < 14) return;
+      var done = 0;
+      S.habits.forEach(function (h) { var v = o[h.id] | 0; for (var d = 1; d <= el; d++) if (v & (1 << (d - 1))) done++; });
+      if (done / (n * el) >= 0.8) P.month80 = true;
+    });
+    return P;
+  }
+  function earnedNow(P) { return ACH.filter(function (a) { return a.v(P) >= a.g; }).map(function (a) { return a.id; }); }
+  function levelIdx(days) { var i = 0; LEVELS.forEach(function (l, j) { if (days >= l.d) i = j; }); return i; }
+  function checkAwards() {
+    var P = progress(), cur = earnedNow(P), known = Array.isArray(S.meta.ach) ? S.meta.ach : [], fresh = [];
+    cur.forEach(function (id) { if (known.indexOf(id) < 0) fresh.push(id); });
+    var lvl = levelIdx(P.days), old = typeof S.meta.lvl === 'number' ? S.meta.lvl : 0, news = [];
+    if (fresh.length || lvl > old) { S.meta.ach = known.concat(fresh); S.meta.lvl = Math.max(lvl, old); mark('meta'); }
+    if (lvl > old) news.push('Новый статус: ' + LEVELS[lvl].n);
+    fresh.forEach(function (id) { var a = ACH.filter(function (x) { return x.id === id; })[0]; news.push('Новая награда: ' + a.t); });
+    return news;
+  }
+  var toastTimer = null;
+  function toast(msgs) {
+    if (!msgs || !msgs.length) return;
+    var el = document.getElementById('toast'); if (!el) return;
+    el.textContent = msgs.join('\n'); el.classList.add('on');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { el.classList.remove('on'); }, 4500);
+    if (inTG && ver('6.1') && TG.HapticFeedback) { try { TG.HapticFeedback.notificationOccurred('success'); } catch (e) {} }
+  }
+  function pathView() {
+    var P = progress(), li = levelIdx(P.days), L = LEVELS[li], nx = LEVELS[li + 1];
+    var known = Array.isArray(S.meta.ach) ? S.meta.ach : [];
+    var pct = nx ? Math.round((P.days - L.d) / (nx.d - L.d) * 100) : 100;
+    var lv = LEVELS.map(function (l, i) { return '<span class="lv' + (i < li ? ' past' : (i === li ? ' on' : '')) + '">' + l.n + '</span>'; }).join('');
+    var got = 0;
+    var cards = ACH.map(function (a) {
+      var v = a.v(P), ok = v >= a.g || known.indexOf(a.id) >= 0; if (ok) got++;
+      var w = ok ? 100 : Math.round(Math.min(v, a.g) / a.g * 100);
+      return '<div class="ach' + (ok ? ' got' : '') + '"><span class="bd">' + CHECK + '</span><div class="nm">' + a.t + '</div><div class="ds">' + a.d + '</div>' +
+        (ok ? '' : '<div class="pv">' + Math.min(v, a.g) + ' из ' + a.g + '</div><div class="pg"><i style="width:' + w + '%"></i></div>') + '</div>';
+    }).join('');
+    return demoBanner() +
+      '<section class="card stack"><div><div class="eyebrow">Ваш статус</div><div class="stname">' + L.n + '</div></div>' +
+      '<div class="lvbar" aria-hidden="true"><i style="width:' + pct + '%"></i></div>' +
+      '<p class="note">' + (nx ? 'Дней практики: ' + P.days + '. До статуса «' + nx.n + '» ещё ' + (nx.d - P.days) + '.' : 'Дней практики: ' + P.days + '. Вы достигли высшего статуса.') + '</p>' +
+      '<div class="levels">' + lv + '</div></section>' +
+      '<div class="pstats"><div class="pstat"><b>' + P.streak + '</b><span>дней подряд сейчас</span></div><div class="pstat"><b>' + P.best + '</b><span>лучшая серия</span></div>' +
+      '<div class="pstat"><b>' + P.marks + '</b><span>всего отметок</span></div><div class="pstat"><b>' + P.full + '</b><span>полных дней</span></div></div>' +
+      '<section class="card stack"><div class="card-t" style="margin:0"><span class="eyebrow">Награды</span><span class="note">' + got + ' из ' + ACH.length + '</span></div><div class="agrid">' + cards + '</div></section>' +
+      (S.demo ? '<p class="note">Это пример. Первая ваша отметка откроет путь.</p>' : '');
+  }
+
   /* ---------- сохранение: только изменившиеся ключи, с задержкой, по одному ---------- */
   var dirty = {}, timer = null, busy = false;
   function setStatus(t, err) { var el = document.getElementById('status'); if (el) { el.textContent = t; el.className = 'status' + (err ? ' err' : ''); } }
@@ -365,6 +495,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
         var o = parse(vals[k]); if (o && typeof o === 'object') S.checks[k.slice(2)] = o;
       });
       S.demo = !S.meta.demoDone && !Array.isArray(hs) && !Object.keys(S.checks).length;
+      if (!S.demo && !Array.isArray(S.meta.ach)) { var P0 = progress(); S.meta.ach = earnedNow(P0); S.meta.lvl = levelIdx(P0.days); }
       if (TABS.indexOf(S.meta.tab) >= 0) UI.tab = S.meta.tab;
       S.ready = true;
       setStatus(S.demo ? '' : (useCloud ? 'Сохранено' : 'Сохранено на этом устройстве'));
@@ -376,7 +507,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
 
   /* ---------- виды ---------- */
   function tabsHtml() {
-    var t = [['today', 'Сегодня'], ['month', 'Месяц'], ['habits', 'Практики']];
+    var t = [['today', 'Сегодня'], ['month', 'Месяц'], ['habits', 'Практики'], ['path', 'Путь']];
     return t.map(function (x) {
       return '<button class="tab" role="tab" id="tab-' + x[0] + '" aria-selected="' + (UI.tab === x[0]) + '" data-act="tab" data-v="' + x[0] + '" data-k="tab-' + x[0] + '"' + (S.ready ? '' : ' disabled') + '>' + x[1] + '</button>';
     }).join('');
@@ -501,7 +632,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
     }).join('');
     return demoBanner() +
       '<div class="daybar"><button class="icon-btn" data-act="wk" data-v="-7" aria-label="Предыдущая неделя" data-k="wprev">‹</button><div class="strip">' + chips + '</div><button class="icon-btn" data-act="wk" data-v="7" aria-label="Следующая неделя" data-k="wnext">›</button></div>' +
-      '<div class="todayhead"><div><div class="eyebrow">' + WD_FULL[wi] + '</div><h2 class="dateh">' + s.d + ' ' + MONTHS_G[s.m] + '</h2></div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span class="prog">Отмечено ' + done + ' из ' + n + '</span>' + (isToday ? '' : '<button class="btn sm" data-act="gotoday" data-k="gotoday">Вернуться к сегодня</button>') + '</div></div>' +
+      '<div class="todayhead"><div><div class="eyebrow">' + WD_FULL[wi] + '</div><h2 class="dateh">' + s.d + ' ' + MONTHS_G[s.m] + '</h2></div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn sm" data-act="topath" data-k="topath">' + LEVELS[levelIdx(progress().days)].n + ' · серия ' + progress().streak + '</button><span class="prog">Отмечено ' + done + ' из ' + n + '</span>' + (isToday ? '' : '<button class="btn sm" data-act="gotoday" data-k="gotoday">Вернуться к сегодня</button>') + '</div></div>' +
       '<div class="hl">' + rows + '</div>';
   }
 
@@ -533,7 +664,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
     var v = document.getElementById('view');
     if (S.loadErr) { v.innerHTML = errorView(); return; }
     if (!S.ready) { v.innerHTML = skeleton(); return; }
-    v.innerHTML = UI.tab === 'today' ? todayView() : (UI.tab === 'habits' ? habitsView() : monthView());
+    v.innerHTML = UI.tab === 'today' ? todayView() : (UI.tab === 'habits' ? habitsView() : (UI.tab === 'path' ? pathView() : monthView()));
     var g2 = document.querySelector('.gridwrap');
     if (g2) {
       if (!UI.scrolled) {
@@ -553,7 +684,8 @@ table.g { border-collapse: separate; border-spacing: 0; }
     if (!S.ready) return;
     if (a === 'tab') { UI.tab = t.dataset.v; UI.scrolled = false; UI.confirm = null; S.meta.tab = UI.tab; mark('meta'); render(); window.scrollTo(0, 0); return; }
     if (a === 'mnav') { var d = new Date(UI.vy, UI.vm + (+t.dataset.v), 1); UI.vy = d.getFullYear(); UI.vm = d.getMonth(); UI.scrolled = false; render(); return; }
-    if (a === 'toggle') { toggle(+t.dataset.y, +t.dataset.m, +t.dataset.d, hid); render(); return; }
+    if (a === 'toggle') { toggle(+t.dataset.y, +t.dataset.m, +t.dataset.d, hid); render(); toast(checkAwards()); return; }
+    if (a === 'topath') { UI.tab = 'path'; UI.confirm = null; S.meta.tab = 'path'; mark('meta'); render(); window.scrollTo(0, 0); return; }
     if (a === 'pick') { UI.sel = { y: +t.dataset.y, m: +t.dataset.m, d: +t.dataset.d }; render(); return; }
     if (a === 'wk') { var s = UI.sel, nd = new Date(s.y, s.m, s.d + (+t.dataset.v)); UI.sel = { y: nd.getFullYear(), m: nd.getMonth(), d: nd.getDate() }; render(); return; }
     if (a === 'gotoday') { UI.sel = { y: TY, m: TM, d: TD }; render(); return; }
