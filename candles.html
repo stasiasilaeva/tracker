@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e0b1a">
+<title>Какая свеча мне подходит</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400&family=Inter:wght@400;500&display=swap">
+<style>
+/* Дизайн-система «Глубина» (SILA), как в трекере практик. */
+:root {
+  --void:#0e0b1a; --depth:#150f2b; --dusk:#1e1540; --mist:#2e2460;
+  --purple:#7b5fd4; --purple-dark:#4a3698; --glow:#9b7fec; --tint:rgba(123,95,212,.2);
+  --gold:#c9a84c; --gold-tint:rgba(201,168,76,.15);
+  --tx:#f0eeff; --tx2:#c4bae8; --muted:#9d8fd4;
+  --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --shadow:0 2px 16px rgba(0,0,0,.35);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--void); -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--void); color: var(--tx); font-family: var(--sans); font-size: 15px; line-height: 1.7;
+  padding-top: max(24px, calc(var(--tg-content-safe-area-inset-top, 0px) + var(--tg-safe-area-inset-top, 0px) + 12px));
+  padding-bottom: max(48px, calc(env(safe-area-inset-bottom, 0px) + 32px), calc(var(--tg-safe-area-inset-bottom, 0px) + 32px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-font-smoothing: antialiased; overflow-x: hidden;
+}
+.app { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+button, a.btn { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--glow); outline-offset: 2px; }
+.eyebrow { font-size: 11px; line-height: 1.4; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(32px, 8vw, 44px); line-height: 1.1; letter-spacing: -.5px; margin: 6px 0 10px; text-wrap: balance; }
+h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(26px, 6.5vw, 32px); line-height: 1.2; margin: 4px 0 0; text-wrap: balance; }
+p { margin: 0; }
+.lead { color: var(--tx2); }
+.card { background: var(--depth); border: .5px solid var(--mist); border-radius: 12px; box-shadow: var(--shadow); padding: 20px; }
+.stack { display: flex; flex-direction: column; gap: 14px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; border: 1.5px solid var(--purple-dark); background: transparent; color: var(--glow); border-radius: 40px; padding: 11px 24px; font-size: 15px; transition: background .15s, transform .1s; }
+.btn:hover { background: var(--tint); }
+.btn:active { transform: scale(.98); }
+.btn.primary { background: var(--purple); border-color: var(--purple); color: var(--tx); }
+.btn.primary:hover { opacity: .9; background: var(--purple); }
+.btn.ghost { border: .5px solid var(--mist); color: var(--tx2); }
+.btn.full { width: 100%; }
+.prog { display: flex; gap: 6px; }
+.prog i { flex: 1; height: 4px; border-radius: 2px; background: var(--mist); }
+.prog i.on { background: var(--glow); }
+.opts { display: flex; flex-direction: column; gap: 8px; }
+.opt { width: 100%; text-align: left; background: var(--depth); border: .5px solid var(--mist); border-radius: 12px; padding: 14px 16px; min-height: 52px; line-height: 1.45; transition: background .15s, border-color .15s; }
+.opt:hover { border-color: var(--purple-dark); background: var(--dusk); }
+.nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.linkbtn { background: none; border: 0; color: var(--muted); font-size: 13px; padding: 6px 0; }
+.price { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.price b { font-family: var(--serif); font-size: 30px; font-weight: 500; color: var(--gold); line-height: 1; }
+.price s { color: var(--muted); font-size: 14px; }
+.tag { display: inline-block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); background: var(--gold-tint); border-radius: 4px; padding: 2px 8px; }
+ul.fit { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+ul.fit li { position: relative; padding-left: 18px; color: var(--tx2); }
+ul.fit li::before { content: ''; position: absolute; left: 2px; top: .7em; width: 6px; height: 6px; border-radius: 50%; background: var(--glow); }
+.sub { font-size: 13px; color: var(--muted); }
+.alt { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.alt .nm { font-family: var(--serif); font-size: 22px; line-height: 1.2; }
+.photo { display: block; width: calc(100% + 40px); margin: -20px -20px 0; aspect-ratio: 4 / 5; object-fit: cover; object-position: center 30%; border-radius: 12px 12px 0 0; background: var(--dusk); }
+.note { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.fade { animation: fade .25s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script>
+(function () {
+  /* Ссылки на покупку: вписать, когда будут известны. Пустая ссылка ведёт на SHOP. */
+  var SHOP = 'https://sila-anastasiia.com/samhain';
+  var C = {
+    balance: { name: '«Точка Равновесия»', kind: 'катаная свеча · Мабон', price: 440, old: 572, link: 'https://sila-anastasiia.com/samhain_c_ravnov', img: 'candle-balance.webp', limited: true,
+      about: 'Свеча на день осеннего равноденствия, когда день и ночь равны. Помогает остановиться и спокойно подвести итоги года: что ты несёшь дальше, а что оставляешь здесь.',
+      fit: ['весь год ты отдавала силы делу и близким, а себе почти ничего', 'тянет в обе стороны: «надо успеть» и «пора остановиться»', 'ты закрываешь проект, работу или отношения и хочешь отметить переход осознанно', 'накопились чужие ожидания и обязательства, часть пора оставить в уходящем сезоне'],
+      tip: 'Мини-ритуал на вечер: лист пополам. Слева то, что несёшь в новый цикл, справа то, что оставляешь. Зажги свечу и пиши, пока она горит.' },
+    rod: { name: 'Набор «Принятие Родового дара»', kind: '5 катаных свечей', price: 315, old: 450, link: 'https://sila-anastasiia.com/samhain_c_nabor', img: 'candle-rod.webp',
+      about: 'Помогает открыться навстречу поддержке рода: принять ресурс и потенциал от родовой системы, а не блокировать его. Мягкий вход в тему рода.',
+      fit: ['чувствуешь, что не разрешаешь себе получать поддержку от рода', 'есть ощущение, что твой потенциал заблокирован', 'хочется мягкого ежедневного ритуала, а не разовой практики', 'ты работаешь с темой рода и хочешь начать с малого'],
+      tip: 'Как прожигать: не больше одной свечи в день, с перерывами в несколько дней.' },
+    abund: { name: 'Скрутка «Изобилие»', kind: 'скрутка', price: 350, old: 500, link: 'https://sila-anastasiia.com/samhain_c_izob', img: 'candle-abund.webp',
+      about: 'Раскрывает ощущение изобилия: не только про деньги, но и про то, что на всё хватит. Помогает поменять внутренний настрой, с которого начинаются другие решения.',
+      fit: ['ты упёрлась в потолок дохода и не видишь следующего шага', 'часто ловишь мысль «мне не хватит»', 'хочется расширить взгляд на возможности заработка', 'ищешь лёгкий повод начать менять денежные привычки'],
+      tip: 'Прожигается в циклы растущей луны.' },
+    clients: { name: 'Скрутка «Привлечение клиентов»', kind: 'скрутка', price: 490, old: 700, link: 'https://sila-anastasiia.com/samhain_c_klienty', img: 'candle-clients.webp',
+      about: 'Настраивает на поток клиентов и лёгкость в продажах. Шалфей очищает рабочее поле, ромашка смягчает общение, аир помогает держаться уверенно.',
+      fit: ['пусто в записи или заявках', 'сделки срываются на последнем шаге', 'ты предприниматель или специалист и ищешь новых клиентов', 'хочется меньше «впаривать» и больше естественного интереса к тебе'],
+      tip: 'Совет: зажигай на рабочем месте или рядом с тем, чем зарабатываешь.' },
+    tree: { name: 'Скрутка «Древо Изобилия»', kind: '5 свечей', price: 700, old: 1000, link: 'https://sila-anastasiia.com/samhain_c_drevo', img: 'candle-tree.webp',
+      about: 'Свеча о долгом росте, а не о разовой удаче: деньги растут, как дерево, и важно защитить то, что накоплено.',
+      fit: ['хочешь не просто заработать, а выстроить устойчивый финансовый фундамент', 'начала откладывать или копить и хочется поставить защиту на свои ресурсы', 'есть страх, что заработанное «утечёт» или будет задето чужой завистью', 'нужна опора на несколько недель: по одной свече на растущую луну'],
+      tip: 'Прожигается в циклы растущей луны.' },
+    spirit: { name: 'Скрутка «Духовность»', kind: 'скрутка', price: 350, old: 500, link: 'https://sila-anastasiia.com/samhain_c_duh', img: 'candle-spirit.webp',
+      about: 'Помогает замедлиться, успокоиться и найти выход там, где его не видно. Свеча тишины.',
+      fit: ['мысли бегут по кругу и не получается сосредоточиться', 'ты в ситуации, где не видно выхода, и нужна пауза без решений на нервах', 'устала от гонки и хочется вечера для себя: свеча, тишина, дыхание', 'нужна тишина перед важным разговором или шагом'],
+      tip: 'Прожигается в циклы растущей луны.' },
+    scale: { name: 'Скрутка «Проявленность и масштаб»', kind: 'программная скрутка', price: 1050, old: 1500, link: 'https://sila-anastasiia.com/samhain_c_proyav', img: 'candle-scale.webp',
+      about: 'Работает на видимость, чтобы тебя замечали, слышали и звали. Работает со страхами и внутренними ограничениями, которые держат в тени.',
+      fit: ['чувствуешь, что готова к следующему уровню, но что-то держит в тени', 'хочется быть заметнее в своём деле', 'пора выйти из зоны комфорта и заявить о себе', 'ищешь поддержку для масштабирования'],
+      tip: 'Прожигается в циклы растущей луны.' },
+    forest: { name: 'Скрутка «Сила леса»', kind: '7 свечей', price: 1050, old: 1500, link: 'https://sila-anastasiia.com/samhain_c_les', img: 'candle-forest.webp',
+      about: 'Свеча про силу, которая не кричит. Укрепляет силу духа, гармонизирует состояние, успокаивает разум и возвращает силы для новых начинаний.',
+      fit: ['вымоталась и нужно наполниться перед новым этапом', 'тяжело отпустить прошлое: период, отношения, старые решения', 'начинаешь новое дело и хочешь войти в него спокойно, с опорой на себя', 'хочется не рывка, а ровной устойчивой силы'],
+      tip: 'Семь свечей — это неделя ритуала: по одной в день или с паузами, как идёт.' }
+  };
+  var ORDER = ['balance', 'spirit', 'forest', 'abund', 'tree', 'clients', 'scale', 'rod'];
+  /* Вторая свеча из той же линейки, если по ответам явного второго выбора нет. */
+  var RELATED = { clients: 'abund', abund: 'tree', tree: 'abund', scale: 'forest', forest: 'scale', spirit: 'balance', balance: 'forest', rod: 'balance' };
+  var STEPS = {
+    balance: 'Осень, подведение итогов: «Духовность», затем «Точка Равновесия», затем «Сила леса». Замедлиться, подвести итог и набраться сил.',
+    spirit: 'Осень, подведение итогов: «Духовность», затем «Точка Равновесия», затем «Сила леса». Замедлиться, подвести итог и набраться сил.',
+    forest: 'Выход на новый уровень: «Сила леса», затем «Проявленность и масштаб». Сначала опора, потом видимость.',
+    scale: 'Выход на новый уровень: «Сила леса», затем «Проявленность и масштаб». Сначала опора, потом видимость.',
+    clients: 'Дело и деньги: «Привлечение клиентов», затем «Изобилие», затем «Древо Изобилия». Люди, настрой, устойчивость.',
+    abund: 'Дело и деньги: «Привлечение клиентов», затем «Изобилие», затем «Древо Изобилия». Люди, настрой, устойчивость.',
+    tree: 'Дело и деньги: «Привлечение клиентов», затем «Изобилие», затем «Древо Изобилия». Люди, настрой, устойчивость.',
+    rod: 'Род: набор «Принятие Родового дара» как мягкий вход, затем одноимённая скрутка.'
+  };
+  var Q = [
+    { q: 'С чем ты сейчас хочешь поработать?', a: [
+      ['Хочу больше денег и чувства, что на всё хватит', { abund: 3, tree: 2 }],
+      ['Нужны клиенты и заявки', { clients: 3, scale: 1 }],
+      ['Готова к новому уровню, хочу, чтобы меня замечали', { scale: 3, forest: 1 }],
+      ['Устала, нужны силы и опора', { forest: 3, spirit: 1 }],
+      ['В голове шум, хочу тишины и ясности', { spirit: 3, balance: 1 }],
+      ['Завершаю этап и хочу подвести итоги', { balance: 3, forest: 1 }],
+      ['Хочу почувствовать поддержку рода', { rod: 3 }]
+    ] },
+    { q: 'Какая фраза больше про тебя сейчас?', a: [
+      ['«Мне вечно не хватает»', { abund: 2 }],
+      ['«Деньги приходят, но утекают»', { tree: 3 }],
+      ['«Пусто в записи, сделки срываются»', { clients: 2 }],
+      ['«Знаю, что могу больше, но держусь в тени»', { scale: 2 }],
+      ['«Не вижу выхода, мысли ходят по кругу»', { spirit: 2 }],
+      ['«Всё отдаю другим, себе почти ничего»', { balance: 2 }],
+      ['«Не получается отпустить прошлое»', { forest: 2, balance: 1 }],
+      ['«Как будто мой потенциал заблокирован»', { rod: 2, scale: 1 }]
+    ] },
+    { q: 'Какой ритуал тебе ближе?', a: [
+      ['Один спокойный вечер для себя', { balance: 1, spirit: 1, abund: 1, clients: 1 }],
+      ['Мягкий ежедневный ритуал маленькими свечами', { rod: 2 }],
+      ['Практика на несколько недель, по растущей луне', { tree: 1, forest: 1, abund: 1 }],
+      ['Сильная программная работа', { scale: 1, forest: 1, tree: 1 }]
+    ] },
+    { q: 'Что хочется почувствовать через месяц?', a: [
+      ['Спокойствие и ясность', { spirit: 2 }],
+      ['Устойчивость и защищённость', { tree: 2, forest: 1 }],
+      ['Лёгкость в деньгах', { abund: 2 }],
+      ['Поток клиентов', { clients: 2 }],
+      ['Уверенность и видимость', { scale: 2 }],
+      ['Силы на новое', { forest: 2 }],
+      ['Гармонию с собой', { balance: 2 }],
+      ['Связь с родом', { rod: 2 }]
+    ] }
+  ];
+
+  var TG = (window.Telegram && window.Telegram.WebApp) || null;
+  var inTG = !!(TG && TG.initData);
+  var ver = function (v) { try { return !!(TG && TG.isVersionAtLeast && TG.isVersionAtLeast(v)); } catch (e) { return false; } };
+  if (inTG) {
+    try { TG.ready(); TG.expand(); } catch (e) {}
+    if (ver('6.1')) { try { TG.setHeaderColor('#0e0b1a'); TG.setBackgroundColor('#0e0b1a'); } catch (e) {} }
+  }
+  function haptic() { if (inTG && ver('6.1') && TG.HapticFeedback) { try { TG.HapticFeedback.selectionChanged(); } catch (e) {} } }
+
+  var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+  var rub = function (n) { return n.toLocaleString('ru-RU').replace(/ /g, ' ') + ' ₽'; };
+  var S = { step: -1, picks: [] };
+  var app = document.getElementById('app');
+
+  function intro() {
+    return '<header><div class="eyebrow">Распродажа к Самайну · до 31 октября</div><h1>Какая свеча тебе подходит</h1>' +
+      '<p class="lead">Четыре коротких вопроса, и ты узнаешь, какая свеча из осенней лавки поддержит тебя сейчас.</p></header>' +
+      '<button class="btn primary full" data-act="start">Начать</button>';
+  }
+  function question() {
+    var q = Q[S.step], bars = '';
+    for (var i = 0; i < Q.length; i++) bars += '<i class="' + (i <= S.step ? 'on' : '') + '"></i>';
+    return '<div class="prog" aria-hidden="true">' + bars + '</div>' +
+      '<div><div class="eyebrow">Вопрос ' + (S.step + 1) + ' из ' + Q.length + '</div><h2>' + esc(q.q) + '</h2></div>' +
+      '<div class="opts">' + q.a.map(function (a, i) { return '<button class="opt" data-act="pick" data-i="' + i + '">' + esc(a[0]) + '</button>'; }).join('') + '</div>' +
+      '<div class="nav"><button class="linkbtn" data-act="back">' + (S.step ? '‹ Назад' : '‹ В начало') + '</button></div>';
+  }
+  function scores() {
+    var s = {}; ORDER.forEach(function (k) { s[k] = 0; });
+    S.picks.forEach(function (p, i) { var w = Q[i].a[p][1]; for (var k in w) s[k] += w[k]; });
+    S.score = s;
+    var first = S.picks.length ? Object.keys(Q[0].a[S.picks[0]][1])[0] : null;
+    return ORDER.slice().sort(function (a, b) { return (s[b] - s[a]) || (b === first) - (a === first) || ORDER.indexOf(a) - ORDER.indexOf(b); });
+  }
+  function buyHref(c) { return c.link || SHOP; }
+  function result() {
+    var r = scores(), k = r[0], c = C[k], href = buyHref(c);
+    var alt = C[S.score[r[1]] >= 2 ? r[1] : RELATED[k]];
+    return '<div class="eyebrow">Твоя свеча</div>' +
+      '<section class="card stack fade">' + (c.img ? '<img class="photo" src="' + esc(c.img) + '" alt="' + esc(c.name) + '">' : '') + '<div><span class="tag">' + esc(c.kind) + (c.limited ? ' · лимитированная' : '') + '</span><h2>' + esc(c.name) + '</h2></div>' +
+      '<div class="price"><b>' + rub(c.price) + '</b><s>' + rub(c.old) + '</s></div>' +
+      '<p class="lead">' + esc(c.about) + '</p>' +
+      '<div class="stack" style="gap:8px"><div class="eyebrow">Подойдёт, если</div><ul class="fit">' + c.fit.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul></div>' +
+      '<p class="sub">' + esc(c.tip) + '</p>' +
+      (href ? '<a class="btn primary full" href="' + esc(href) + '" data-act="buy" target="_blank" rel="noopener">Заказать свечу</a>' : '') +
+      '</section>' +
+      '<section class="card stack"><div class="eyebrow">Ещё может откликнуться</div><div class="alt"><div><div class="nm">' + esc(alt.name) + '</div><div class="sub">' + rub(alt.price) + ' вместо ' + rub(alt.old) + '</div></div>' +
+      (buyHref(alt) ? '<a class="btn" href="' + esc(buyHref(alt)) + '" data-act="buy" target="_blank" rel="noopener">Смотреть</a>' : '') + '</div></section>' +
+      (STEPS[k] ? '<section class="card stack"><div class="eyebrow">Если хочется пройти путь по шагам</div><p class="lead">' + esc(STEPS[k]) + '</p></section>' : '') +
+      '<button class="btn ghost full" data-act="restart">Пройти тест ещё раз</button>' +
+      '<p class="note">Свечи — это ритуал и атмосфера. Они не заменяют помощь врача, психолога, юриста или финансового консультанта и не гарантируют результата. Зажигай на ровной устойчивой поверхности, вдали от штор и бумаги, не оставляй горящую свечу без присмотра.</p>';
+  }
+  function render() {
+    app.innerHTML = S.step < 0 ? intro() : (S.step < Q.length ? question() : result());
+    window.scrollTo(0, 0);
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-act]'); if (!t) return;
+    var a = t.dataset.act;
+    if (a === 'start') { S.step = 0; S.picks = []; haptic(); render(); }
+    else if (a === 'pick') { S.picks[S.step] = +t.dataset.i; S.picks.length = S.step + 1; S.step++; haptic(); render(); }
+    else if (a === 'back') { S.step = Math.max(-1, S.step - 1); S.picks.length = Math.max(0, S.step); render(); }
+    else if (a === 'restart') { S.step = -1; S.picks = []; render(); }
+    else if (a === 'buy' && inTG && TG.openLink) { e.preventDefault(); try { TG.openLink(t.href); } catch (x) { location.href = t.href; } }
+  });
+  render();
+})();
+</script>
+</body>
+</html>
