@@ -504,11 +504,11 @@ table.g { border-collapse: separate; border-spacing: 0; }
     return news;
   }
   var toastTimer = null;
-  function toast(msgs) {
+  function toast(msgs, ms) {
     if (!msgs || !msgs.length) return;
     var el = document.getElementById('toast'); if (!el) return;
     el.textContent = msgs.join('\n'); el.classList.add('on');
-    clearTimeout(toastTimer); toastTimer = setTimeout(function () { el.classList.remove('on'); }, 4500);
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { el.classList.remove('on'); }, (ms || 4500));
     if (inTG && ver('6.1') && TG.HapticFeedback) { try { TG.HapticFeedback.notificationOccurred('success'); } catch (e) {} }
   }
   function pathView() {
@@ -719,12 +719,26 @@ table.g { border-collapse: separate; border-spacing: 0; }
       S.rem = r.settings; setStatus('Напоминания сохранены'); render(); if (S.rem.eOn) remSyncNow();
     }).catch(function () { S.rem = old; setStatus('Не удалось сохранить напоминания', true); render(); });
   }
+  /* первое открытие: по решению школы напоминания включаются сразу, ученица сообщением узнаёт об этом и может выключить */
+  function remFirst() {
+    var go = function () {
+      remSave({ mOn: true, eOn: true }).then(function () {
+        if (S.rem && S.rem.mOn) toast(['Напоминания включены: карта дня в ' + S.rem.m + ' и отметка практик вечером в ' + S.rem.e + '.', 'Изменить или выключить можно во вкладке «Практики».'], 8000);
+      });
+    };
+    if (inTG && ver('6.9') && TG.requestWriteAccess) { try { TG.requestWriteAccess(function (allowed) { if (allowed) go(); }); } catch (e) { go(); } } else go();
+  }
   function remBoot() {
     var o = null; try { o = new URLSearchParams(location.search).get('o'); } catch (e) {}
     if (o === 'card') { try { history.replaceState(null, '', location.pathname); } catch (e) {} UI.tab = 'today'; render(); openCard(); }
     if (!remOn()) return;
     remCall('/api/me', {}).then(function (r) {
-      if (r && r.settings) { S.rem = r.settings; if (UI.tab === 'habits' && !UI.journal) render(); if (S.rem.eOn) remSyncNow(); }
+      if (r && r.settings) {
+        S.rem = r.settings;
+        if (!S.rem.tz) { remFirst(); return; }
+        if (UI.tab === 'habits' && !UI.journal) render();
+        if (S.rem.eOn) remSyncNow();
+      }
     }).catch(function () {});
   }
   function timeOpts(from, to, cur) {
