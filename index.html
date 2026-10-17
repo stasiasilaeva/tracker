@@ -199,6 +199,33 @@ table.g { border-collapse: separate; border-spacing: 0; }
 .ach .pv { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px) + var(--tg-safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); background: var(--dusk); border: .5px solid var(--glow); box-shadow: 0 0 24px rgba(155,127,236,.35); border-radius: 12px; padding: 12px 20px; font-size: 14px; max-width: min(92vw, 420px); text-align: center; white-space: pre-line; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 50; }
 .toast.on { opacity: 1; transform: translate(-50%, 0); }
+/* карта дня */
+.cardday { display: flex; align-items: center; gap: 16px; }
+.cardday img { width: 64px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 8px; border: .5px solid var(--glow); box-shadow: 0 0 16px rgba(155,127,236,.3); flex: none; background: var(--dusk); }
+.cardday .cd-b { display: flex; flex-direction: column; gap: 4px; min-width: 0; align-items: flex-start; }
+.cardday .cd-t { font-family: var(--serif); font-size: 22px; line-height: 1.2; }
+.ov { position: fixed; inset: 0; z-index: 60; background: rgba(14,11,26,.97); overflow-y: auto; -webkit-overflow-scrolling: touch; opacity: 0; transition: opacity .25s; }
+.ov[hidden] { display: none; }
+.ov.on { opacity: 1; }
+.ov-in { max-width: 520px; margin: 0 auto; padding: max(20px, calc(var(--tg-content-safe-area-inset-top, 0px) + var(--tg-safe-area-inset-top, 0px) + 16px)) 16px max(40px, calc(env(safe-area-inset-bottom, 0px) + 32px)); display: flex; flex-direction: column; gap: 18px; align-items: stretch; }
+.ov-x { align-self: flex-end; }
+.ov-e { text-align: center; }
+.flip { perspective: 1200px; width: min(68vw, 280px); aspect-ratio: 2 / 3; margin: 0 auto; cursor: pointer; }
+.fl-in { position: relative; width: 100%; height: 100%; transition: transform .9s cubic-bezier(.4,.2,.2,1); transform-style: preserve-3d; }
+.flip.done .fl-in { transform: rotateY(180deg); }
+.flip:not(.done) .fl-in { animation: float 3.2s ease-in-out infinite; }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.fl-b, .fl-f { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 12px; object-fit: cover; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 0 40px rgba(155,127,236,.35); background: var(--dusk); }
+.fl-f { transform: rotateY(180deg); }
+.ov-hint { text-align: center; color: var(--tx2); font-size: 14px; }
+.ov-txt { display: flex; flex-direction: column; gap: 16px; animation: fade .5s ease; }
+.ov-date { text-align: center; font-family: var(--serif); font-size: 22px; color: var(--gold); line-height: 1.2; }
+.ov-name { text-align: center; font-family: var(--serif); font-size: clamp(32px, 9vw, 42px); font-weight: 400; line-height: 1.1; margin: 0; }
+.ov-key { text-align: center; font-family: var(--serif); font-style: italic; font-size: 21px; line-height: 1.4; color: var(--tx); }
+.ov-sec { background: var(--depth); border: .5px solid var(--mist); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.ov-sec p { margin: 0; color: var(--tx2); }
+.ov-cta { background: var(--dusk); border: .5px solid var(--purple-dark); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.ov-cta p { margin: 0; color: var(--tx2); font-size: 14px; }
 @media (max-width: 380px) { .srow .icon-btn { width: 32px; height: 32px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
@@ -214,6 +241,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
   <main id="view" class="stack"></main>
   <p class="status" id="status" role="status"></p>
 </div>
+<div class="ov" id="ov" hidden role="dialog" aria-modal="true" aria-label="Карта дня"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -226,6 +254,9 @@ table.g { border-collapse: separate; border-spacing: 0; }
   var DEFAULTS = ['Утренняя настройка Рейки','Медитация','Обращение к Роду','Запись благодарности дню','Вода и заземление','Прогулка на воздухе','Чтение 10 страниц','Ритуал дня','Растяжка или тренировка','Сон до 23:00'];
   var DEMO_P = [.85,.75,.65,.7,.8,.55,.6,.7,.45,.65];
   var MAXH = 12;
+  /* Колода «Энергии Литы», 50 карт. Ссылка на гримуар появится в блоке под картой, когда её впишут сюда. */
+  var LITA_LINK = '';
+  var LITA = [{"n":1,"name":"Поток","key":"Жизнь всегда движется. Если что-то остановилось, пришло время убрать препятствие.","self":"Ты в безопасности, чтобы двигаться вперёд.","practice":"Написать список того, что больше не хочется нести дальше, и символически отпустить.","affirm":"Я доверяю потоку жизни и позволяю энергии свободно течь через меня."},{"n":2,"name":"Корни","key":"Твоя сила глубже, чем ты думаешь.","self":"Тебе не нужно всё нести одной.","practice":"Посмотреть фотографии предков и поблагодарить их.","affirm":"Я принимаю силу своего рода."},{"n":3,"name":"Тепло солнца","key":"Ты создана, чтобы сиять.","self":"Твой свет нужен миру.","practice":"Сделать что-то красивое для себя.","affirm":"Я позволяю себе сиять."},{"n":4,"name":"Право иметь","key":"Ты имеешь право получать.","self":"Ты достойна большего.","practice":"Написать 100 желаний.","affirm":"Я имею право жить в изобилии."},{"n":5,"name":"Зеркало","key":"Мир отражает то, что живёт внутри.","self":"Всё, что ты ищешь, начинается в тебе.","practice":"Записать три качества, которые раздражают в других людях, и спросить — где это есть во мне.","affirm":"Я готова видеть себя честно."},{"n":6,"name":"Тишина","key":"Ответы приходят в тишине.","self":"В тишине я расскажу тебе больше, чем в шуме.","practice":"Час без телефона и разговоров.","affirm":"В тишине я слышу свою душу."},{"n":7,"name":"Огонь","key":"Назови своё желание.","self":"Твой огонь — это твоя жизненная сила, а не угроза.","practice":"Признаться себе в истинном желании.","affirm":"Я разрешаю своему огню гореть."},{"n":8,"name":"Граница","key":"Твоё «нет» тоже священно.","self":"Граница защищает твою силу, а не отрезает любовь.","practice":"Сказать одно честное «нет».","affirm":"Мои границы священны."},{"n":9,"name":"Доверие","key":"Не всё нужно контролировать.","self":"Жизнь поддерживает тех, кто перестаёт бороться с течением.","practice":"Передать Вселенной одну проблему — мысленно или письменно.","affirm":"Жизнь поддерживает меня."},{"n":10,"name":"Урожай","key":"Пришло время собрать свои плоды.","self":"Ты заслужила увидеть плоды своих усилий.","practice":"Записать 50 своих побед.","affirm":"Я принимаю плоды своего труда."},{"n":11,"name":"Расширение","key":"Старые рамки стали тебе малы — и это не кризис, а рост.","self":"Пространство уже готово принять тебя в новом масштабе.","practice":"Назвать вслух, что в жизни уже стало мало.","affirm":"Мне разрешено расширяться."},{"n":12,"name":"Освобождение","key":"Ты уже выросла из этого — держаться больше не нужно.","self":"Отпускание — это акт силы, а не поражения.","practice":"Мысленно перерезать нить, связывающую с тем, что хочется отпустить.","affirm":"Я отпускаю то, что пережило себя."},{"n":13,"name":"Сила рода","key":"За тобой стоит больше поддержки, чем ты позволяешь себе чувствовать.","self":"Поддержка рода доступна без необходимости заслуживать её.","practice":"Мысленно попросить поддержки у тех, кто был до вас.","affirm":"Я принимаю силу своего рода."},{"n":14,"name":"Новый цикл","key":"Это пик одного цикла и начало следующего.","self":"Ты готова войти в новый цикл легче, чем думаешь.","practice":"Назвать, что хочется оставить позади, прежде чем шагнуть дальше.","affirm":"Я благодарю прошедший цикл и готова к новому."},{"n":15,"name":"Изобилие","key":"Вокруг уже больше ресурса, чем кажется.","self":"Ты можешь видеть полноту жизни прямо сейчас.","practice":"Назвать вслух три вещи, которые уже есть в избытке.","affirm":"Я живу в изобилии, которое уже окружает меня."},{"n":16,"name":"Дыхание","key":"Один вдох — и ты уже здесь.","self":"В теле, не в мыслях, ты найдёшь меня.","practice":"Вдох на четыре счёта, задержка на два, выдох на шесть — трижды.","affirm":"Я возвращаюсь в тело через дыхание."},{"n":17,"name":"Пробуждение","key":"Внутри уже что-то изменилось, даже если снаружи всё по-старому.","self":"Внешний мир догонит твой внутренний сдвиг.","practice":"Записать одну мысль, которая ощущается как «точка невозврата».","affirm":"Я доверяю своему внутреннему пробуждению."},{"n":18,"name":"Импульс","key":"Внутри всё готово — пора сделать действие, которое откладывается.","self":"Момент для действия уже наступил.","practice":"Сделать первый, даже маленький шаг к отложенному делу.","affirm":"Я действую, когда внутри всё готово."},{"n":19,"name":"Баланс","key":"Отдых и действие одинаково важны.","self":"Баланс — это тоже форма мудрости, а не слабости.","practice":"На сегодня сознательно выбрать на одно дело меньше, чем планировалось.","affirm":"Я живу в балансе действия и покоя."},{"n":20,"name":"Восстановление","key":"Тело копит силу в покое, а не в рывке.","self":"Покой возвращает тебе силу быстрее, чем любой рывок.","practice":"Позволить себе тридцать минут отдыха без чувства вины.","affirm":"Мне разрешено отдыхать без причины."},{"n":21,"name":"Голос","key":"То, что молчало внутри — пора сказать, сначала себе.","self":"Твой голос — не угроза для других, а твоя целостность.","practice":"Произнести вслух одну честную фразу о текущем чувстве.","affirm":"Я говорю правду спокойно и ясно."},{"n":22,"name":"Близость","key":"Настоящая близость начинается там, где снята маска «всё хорошо».","self":"Тебя можно любить такой, какая ты есть, без маски.","practice":"Сказать близкому человеку одну искреннюю, не дежурную фразу о своих чувствах.","affirm":"Я разрешаю себе быть увиденной по-настоящему."},{"n":23,"name":"Нежность","key":"Сила и нежность могут жить в одном человеке.","self":"Твоя нежность — это тоже сила, не уступка.","practice":"Сделать один мягкий, неторопливый жест заботы о себе.","affirm":"Мне можно быть нежной."},{"n":24,"name":"Со-настройка","key":"В отношениях важнее услышать, чем доказать правоту.","self":"Связь важнее победы в споре.","practice":"В следующем разговоре сначала переспросить, а не сразу возразить.","affirm":"Я готова услышать, а не только быть услышанной."},{"n":25,"name":"Прощение себе","key":"Прости себе тот шаг, который казался ошибкой — он был частью пути.","self":"Ты делала так, как умела на тот момент.","practice":"Назвать один поступок, за который давно пора простить себя.","affirm":"Я прощаю себе путь, которым я шла."},{"n":26,"name":"Капитал силы","key":"Деньги — это твоя энергия в обмене с миром.","self":"Ты можешь получить эквивалент вложенной силы.","practice":"Вспомнить, сколько реальных сил вложено в работу за последний месяц.","affirm":"Моя энергия имеет ценность, и я получаю её эквивалент."},{"n":27,"name":"Источник","key":"Ресурс не приходит снаружи — он включается внутри.","self":"Тебе не нужно искать то, что уже есть в тебе.","practice":"На пять минут обратиться внутрь, прежде чем искать поддержку снаружи.","affirm":"Я сама себе источник силы."},{"n":28,"name":"Заслуга","key":"Ты заслужила результат — потому что вложилась.","self":"Ты заслужила это признание.","practice":"Назвать вслух одно достижение и добавить «я заслужила это».","affirm":"Я принимаю свои заслуги без оправданий."},{"n":29,"name":"Решимость","key":"Ожидание идеального момента закончилось.","self":"Момент уже наступил — ты просто откладывала признание этого.","practice":"Сделать первый, пусть неидеальный шаг к давно откладываемому делу.","affirm":"Я готова начать сейчас, не идеально, но по-настоящему."},{"n":30,"name":"Щедрость","key":"Щедрость к другим начинается со щедрости к себе.","self":"Ты тоже достойна заботы, не только те, кому ты помогаешь.","practice":"Сделать для себя что-то маленькое и приятное прямо сейчас.","affirm":"Я щедра к себе так же, как к другим."},{"n":31,"name":"Алтарь","key":"Не всё в жизни должно быть рациональным.","self":"Священное пространство можно создать в любую минуту.","practice":"Зажечь свечу и посидеть рядом минуту без задач и телефона.","affirm":"Я создаю священное пространство в своей жизни."},{"n":32,"name":"Звезда","key":"Не нужно видеть весь путь — достаточно одной точки света впереди.","self":"Тебе достаточно видеть один шаг вперёд.","practice":"Назвать одну ясную вещь, к которой хочется идти, не зная остального пути.","affirm":"Мне достаточно видеть один шаг, чтобы двигаться дальше."},{"n":33,"name":"Чаша","key":"Тебе можно принимать заботу без необходимости её заслуживать.","self":"Тебе можно получать просто потому, что ты есть.","practice":"Принять одну заботу или помощь без отказа и без «не стоило».","affirm":"Я открыта принимать заботу и любовь."},{"n":34,"name":"Меч истины","key":"Где-то ты до сих пор говоришь себе «всё нормально», хотя давно не нормально.","self":"Ты готова увидеть это ясно.","practice":"Задать себе один честный вопрос о том, что давно не хочется замечать.","affirm":"Я готова видеть правду без драмы и без жалости к себе."},{"n":35,"name":"Спираль","key":"Это не круг — это виток спирали, чуть выше предыдущего.","self":"Ты не вернулась назад — ты поднялась выше.","practice":"Сравнить, как изменилась реакция на похожую ситуацию по сравнению с прошлым разом.","affirm":"Я расту через повторяющиеся уроки, а не застываю в них."},{"n":36,"name":"Пепел","key":"Что-то должно закончиться, чтобы освободить место новому.","self":"Из пепла всегда вырастает новое — доверься этому.","practice":"Мысленно положить то, что готовы отпустить, в воображаемый костёр.","affirm":"Я доверяю завершению как части роста."},{"n":37,"name":"Мост","key":"Находиться между «было» и «будет» — это нормально.","self":"Тебе не нужно бежать через мост — можно идти своим темпом.","practice":"Сказать себе вслух: «Находиться между — это нормально».","affirm":"Я спокойно прохожу через переход к новому."},{"n":38,"name":"Якорь","key":"В шторме важно не побороть волну, а найти то, что держит на месте.","self":"Твой якорь уже есть, просто назови его.","practice":"Назвать вслух три вещи, которые стабильны прямо сейчас.","affirm":"У меня есть устойчивая опора даже в шторм."},{"n":39,"name":"Сад","key":"Регулярная забота даёт плоды не сразу, но даёт.","self":"Каждый день заботы уже что-то меняет, даже если не видно.","practice":"Сделать одно маленькое, регулярное действие для дела, отношений или себя.","affirm":"Я продолжаю заботиться, доверяя времени."},{"n":40,"name":"Лунный свет","key":"Не вся сила — солнечная и громкая.","self":"Я говорю с тобой не громко, а тихо — прислушайся.","practice":"Задать вопрос и слушать не мысли, а ощущение в теле.","affirm":"Я доверяю своей тихой внутренней мудрости."},{"n":41,"name":"Танец","key":"Тело хочет двигаться, а не только думать.","self":"Твоё тело умеет радоваться — дай ему шанс.","practice":"Включить музыку и подвигаться свободно полминуты, не думая, как это выглядит.","affirm":"Я разрешаю своему телу радоваться."},{"n":42,"name":"Крылья","key":"Тяжесть временна. Лёгкость уже растёт.","self":"Твои крылья уже выросли, просто разверни их.","practice":"Расправить плечи и сделать глубокий вдох, представляя, как груз отпускается.","affirm":"Я готова к лёгкости и полёту."},{"n":43,"name":"Зов сердца","key":"Ответ уже есть — просто страшно его признать.","self":"Я говорю с тобой через зов, который ты давно слышишь.","practice":"Задать главный вопрос и слушать не мысли, а тепло или спокойствие в груди.","affirm":"Я доверяю зову своего сердца."},{"n":44,"name":"Голос предков","key":"Иногда тревога — это не твоя тревога, а память рода.","self":"Различение — первый шаг к освобождению.","practice":"При сильной тревоге спросить: «это моё чувство, или я несу его за кого-то из рода?","affirm":"Я различаю своё и переданное родом."},{"n":45,"name":"Колесо года","key":"Текущая точка — не конец и не начало, а часть естественного движения.","self":"Ты двигаешься в верном ритме, даже когда кажется, что стоишь на месте.","practice":"Отметить, в какой фазе цикла вы находитесь сейчас — подъём, пик, спад или покой.","affirm":"Я доверяю естественному ритму своей жизни."},{"n":46,"name":"Очищение","key":"Не всё, что ты несёшь, — твоё.","self":"Очищение делает тебя легче, не холоднее.","practice":"Представить тёплый поток воды, смывающий всё чужое — мысли, тревоги, ожидания других.","affirm":"Я оставляю только то, что действительно моё."},{"n":47,"name":"Встреча с собой","key":"Та, кем ты хочешь стать, уже существует внутри тебя.","self":"Ты ближе к себе, чем тебе кажется.","practice":"Представить себя через год — увереннее и спокойнее — и посмотреть ей в глаза.","affirm":"Я уже та, кем хочу стать — просто учусь это слышать."},{"n":48,"name":"Чудо","key":"Иногда жизнь даёт знаки — достаточно их заметить.","self":"Я подаю тебе знаки чаще, чем ты замечаешь.","practice":"Вспомнить одно недавнее совпадение и сказать «спасибо» вместо поиска логического объяснения.","affirm":"Я замечаю чудеса в своей жизни и благодарю за них."},{"n":49,"name":"Договор с собой","key":"Дай себе обещание, которое сдержишь.","self":"Маленькая выполненная договорённость восстанавливает доверие к себе быстрее, чем грандиозный план.","practice":"Дать себе одно маленькое, реалистичное обещание и сдержать его сегодня же.","affirm":"Я держу слово, данное самой себе."},{"n":50,"name":"Благодарность","key":"Благодарность — это практика, которая открывает поток.","self":"Чем больше ты замечаешь, тем больше тебе даётся.","practice":"Произнести вслух «спасибо за то, что у меня уже есть» и назвать три конкретные вещи.","affirm":"Я благодарна за то, что уже есть в моей жизни."}];
   var TABS = ['today', 'month', 'habits', 'path'];
   var CHECK = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
@@ -285,7 +316,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
     remove: function (k) { try { localStorage.removeItem(LP + k); return Promise.resolve(); } catch (e) { return Promise.reject(e); } }
   };
 
-  var S = { habits: DEFAULTS.map(function (n, i) { return { id: 'h' + (i + 1), name: n }; }), checks: {}, meta: { v: 1, demoDone: false, tab: 'today' }, demo: true, ready: false, loadErr: false };
+  var S = { habits: DEFAULTS.map(function (n, i) { return { id: 'h' + (i + 1), name: n }; }), checks: {}, cards: {}, meta: { v: 1, demoDone: false, tab: 'today' }, demo: true, ready: false, loadErr: false };
   var UI = { tab: 'today', vy: TY, vm: TM, sel: { y: TY, m: TM, d: TD }, confirm: null, scrolled: false };
 
   /* ---------- расчёты ---------- */
@@ -359,6 +390,8 @@ table.g { border-collapse: separate; border-spacing: 0; }
     { id: 'full5', t: 'Пять полных дней', d: 'Пять дней, когда отмечены все практики', v: function (P) { return P.full; }, g: 5 },
     { id: 'week1', t: 'Неделя без пропусков', d: 'Каждый день недели, с понедельника по воскресенье, с отметкой', v: function (P) { return P.weeks; }, g: 1 },
     { id: 'm80', t: 'Месяц в потоке', d: 'Выполнено 80% практик к этому дню месяца', v: function (P) { return P.month80 ? 1 : 0; }, g: 1 },
+    { id: 'card1', t: 'Первое послание', d: 'Первая карта дня из колоды «Энергии Литы»', v: function (P) { return P.cards; }, g: 1 },
+    { id: 'card7', t: 'Неделя посланий', d: 'Семь карт дня', v: function (P) { return P.cards; }, g: 7 },
     { id: 'm100', t: 'Сто отметок', d: 'Сто отмеченных практик', v: function (P) { return P.marks; }, g: 100 },
     { id: 'm300', t: 'Триста отметок', d: 'Триста отмеченных практик', v: function (P) { return P.marks; }, g: 300 }
   ];
@@ -378,7 +411,8 @@ table.g { border-collapse: separate; border-spacing: 0; }
   }
   function progress() {
     var map = dayMap(), n = S.habits.length, keys = Object.keys(map).sort();
-    var P = { days: keys.length, marks: 0, full: 0, streak: 0, best: 0, weeks: 0, month80: false };
+    var P = { days: keys.length, marks: 0, full: 0, streak: 0, best: 0, weeks: 0, month80: false, cards: 0 };
+    Object.keys(S.cards).forEach(function (k) { P.cards += Object.keys(S.cards[k] || {}).length; });
     keys.forEach(function (k) { P.marks += map[k]; if (n && map[k] >= n) P.full++; });
     var run = 0, prev = null;
     keys.forEach(function (k) {
@@ -449,6 +483,62 @@ table.g { border-collapse: separate; border-spacing: 0; }
       (S.demo ? '<p class="note">Это пример. Первая ваша отметка откроет путь.</p>' : '');
   }
 
+  /* ---------- карта дня ---------- */
+  var ovEl = document.getElementById('ov'), cardBusy = false;
+  function todayCardN() { var o = S.cards[key(TY, TM)]; return (o && o[TD]) || 0; }
+  function cardById(n) { for (var i = 0; i < LITA.length; i++) if (LITA[i].n === n) return LITA[i]; return null; }
+  function cardImg(n) { return 'lita-' + pad(n) + '.webp'; }
+  function cardTextHtml(c) {
+    return '<div class="ov-txt"><div class="ov-date">' + TD + ' ' + MONTHS_G[TM] + '</div><h2 class="ov-name">' + esc(c.name) + '</h2>' +
+      '<div class="ov-key">' + esc(c.key) + '</div>' +
+      '<div class="ov-sec"><div class="eyebrow">Послание</div><p>' + esc(c.self) + '</p></div>' +
+      '<div class="ov-sec"><div class="eyebrow">Практика дня</div><p>' + esc(c.practice) + '</p></div>' +
+      '<div class="ov-sec"><div class="eyebrow">Аффирмация</div><p>' + esc(c.affirm) + '</p></div>' +
+      (LITA_LINK ? '<div class="ov-cta"><p>Эта карта из колоды «Энергии Литы». В гримуаре на каждую из 50 карт есть полное описание, голосовая медитация и практика.</p><a class="btn primary" href="' + esc(LITA_LINK) + '" data-act="litalink" target="_blank" rel="noopener">Узнать о гримуаре</a></div>' : '') +
+      '<button class="btn ghost" data-act="closecard" data-k="closecard2" style="align-self:center">Закрыть</button></div>';
+  }
+  function overlayHtml(n) {
+    var c = n ? cardById(n) : null;
+    return '<div class="ov-in"><button class="icon-btn ov-x" data-act="closecard" aria-label="Закрыть" data-k="closecard">×</button>' +
+      '<div class="eyebrow ov-e">Энергии Литы · карта дня</div>' +
+      '<div class="flip' + (c ? ' done' : '') + '" id="flip" data-act="flip" role="button" tabindex="0" aria-label="Перевернуть карту"><div class="fl-in"><img class="fl-b" src="lita-back.webp" alt="Рубашка карты"><img class="fl-f" id="flf" src="' + (c ? cardImg(c.n) : '') + '" alt="' + (c ? esc(c.name) : '') + '"></div></div>' +
+      (c ? cardTextHtml(c) : '<p class="ov-hint" id="hint">Сделайте вдох, задайте вопрос или просто спросите себя, что важно увидеть сейчас. Затем коснитесь карты.</p>') + '</div>';
+  }
+  function openCard() {
+    ovEl.innerHTML = overlayHtml(todayCardN());
+    ovEl.hidden = false; void ovEl.offsetWidth; ovEl.classList.add('on');
+    document.body.style.overflow = 'hidden'; ovEl.scrollTop = 0;
+    if (inTG && ver('6.1') && TG.BackButton) { try { TG.BackButton.onClick(closeCard); TG.BackButton.show(); } catch (e) {} }
+    var cl = ovEl.querySelector('[data-k="closecard"]'); if (cl) { try { cl.focus({ preventScroll: true }); } catch (e) {} }
+  }
+  function closeCard() {
+    ovEl.classList.remove('on'); ovEl.hidden = true; ovEl.innerHTML = '';
+    document.body.style.overflow = '';
+    if (inTG && ver('6.1') && TG.BackButton) { try { TG.BackButton.offClick(closeCard); TG.BackButton.hide(); } catch (e) {} }
+    render();
+  }
+  function drawCard() {
+    if (cardBusy || todayCardN()) return;
+    cardBusy = true;
+    var pool = [], yk = key(TY, TM), prev = 0, yd = new Date(TY, TM, TD - 1), yo = S.cards[key(yd.getFullYear(), yd.getMonth())];
+    if (yo) prev = yo[yd.getDate()] || 0;
+    LITA.forEach(function (c) { if (c.n !== prev) pool.push(c.n); });
+    var n = pool[Math.floor(Math.random() * pool.length)], c = cardById(n);
+    S.cards[yk] = S.cards[yk] || {}; S.cards[yk][TD] = n; mark('c_' + yk);
+    var fl = document.getElementById('flip'), img = document.getElementById('flf'), hint = document.getElementById('hint');
+    if (inTG && ver('6.1') && TG.HapticFeedback) { try { TG.HapticFeedback.impactOccurred('medium'); } catch (e) {} }
+    var go = function () {
+      if (!fl) return;
+      fl.classList.add('done'); if (hint) hint.remove();
+      var wrap = document.createElement('div'); wrap.innerHTML = cardTextHtml(c);
+      setTimeout(function () {
+        fl.parentNode.appendChild(wrap.firstChild);
+        toast(checkAwards()); cardBusy = false;
+      }, 750);
+    };
+    if (img) { img.onload = go; img.onerror = go; img.src = cardImg(n); if (img.complete && img.naturalWidth) { img.onload = null; go(); } } else { go(); }
+  }
+
   /* ---------- сохранение: только изменившиеся ключи, с задержкой, по одному ---------- */
   var dirty = {}, timer = null, busy = false;
   function setStatus(t, err) { var el = document.getElementById('status'); if (el) { el.textContent = t; el.className = 'status' + (err ? ' err' : ''); } }
@@ -456,7 +546,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
   function valueOf(k) {
     if (k === 'habits') return JSON.stringify(S.habits);
     if (k === 'meta') return JSON.stringify(S.meta);
-    var o = S.checks[k.slice(2)];
+    var src = k.indexOf('c_') === 0 ? S.cards : S.checks, o = src[k.slice(2)];
     return o && Object.keys(o).length ? JSON.stringify(o) : null;
   }
   async function flush() {
@@ -480,7 +570,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
   async function load() {
     S.loadErr = false; render();
     try {
-      var keys = (await store.keys()).filter(function (k) { return k === 'habits' || k === 'meta' || /^m_\d{4}-\d{2}$/.test(k); });
+      var keys = (await store.keys()).filter(function (k) { return k === 'habits' || k === 'meta' || /^[mc]_\d{4}-\d{2}$/.test(k); });
       var vals = await store.getMany(keys);
       var meta = parse(vals.meta);
       var hs = parse(vals.habits);
@@ -489,10 +579,10 @@ table.g { border-collapse: separate; border-spacing: 0; }
         hs = hs.filter(function (h) { return h && typeof h.id === 'string' && typeof h.name === 'string'; }).slice(0, MAXH);
         if (hs.length) S.habits = hs;
       }
-      S.checks = {};
+      S.checks = {}; S.cards = {};
       keys.forEach(function (k) {
-        if (k.indexOf('m_') !== 0) return;
-        var o = parse(vals[k]); if (o && typeof o === 'object') S.checks[k.slice(2)] = o;
+        var o = parse(vals[k]); if (!o || typeof o !== 'object') return;
+        if (k.indexOf('m_') === 0) S.checks[k.slice(2)] = o; else if (k.indexOf('c_') === 0) S.cards[k.slice(2)] = o;
       });
       S.demo = !S.meta.demoDone && !Array.isArray(hs) && !Object.keys(S.checks).length;
       if (!S.demo && !Array.isArray(S.meta.ach)) { var P0 = progress(); S.meta.ach = earnedNow(P0); S.meta.lvl = levelIdx(P0.days); }
@@ -630,10 +720,13 @@ table.g { border-collapse: separate; border-spacing: 0; }
       var o = on(s.y, s.m, s.d, h.id), sr = streakNow(h.id);
       return '<button class="hrow' + (o ? ' on' : '') + '" aria-pressed="' + o + '" data-act="toggle" data-y="' + s.y + '" data-m="' + s.m + '" data-d="' + s.d + '" data-hid="' + esc(h.id) + '" data-k="r-' + esc(h.id) + '"><span class="ck">' + CHECK + '</span><span class="nm">' + esc(h.name || 'Без названия') + '</span><span class="sr">' + (sr ? 'серия ' + sr : '') + '</span></button>';
     }).join('');
+    var cn = todayCardN(), cc = cn ? cardById(cn) : null;
+    var cardBlock = '<section class="card cardday"><img src="' + (cc ? cardImg(cn) : 'lita-back.webp') + '" alt="" loading="lazy"><div class="cd-b"><span class="eyebrow">Карта дня</span>' +
+      (cc ? '<div class="cd-t">' + esc(cc.name) + '</div><button class="btn sm" data-act="drawcard" data-k="drawcard">Открыть</button>' : '<div class="cd-t">Энергии Литы</div><button class="btn primary sm" data-act="drawcard" data-k="drawcard">Вытянуть карту</button>') + '</div></section>';
     return demoBanner() +
       '<div class="daybar"><button class="icon-btn" data-act="wk" data-v="-7" aria-label="Предыдущая неделя" data-k="wprev">‹</button><div class="strip">' + chips + '</div><button class="icon-btn" data-act="wk" data-v="7" aria-label="Следующая неделя" data-k="wnext">›</button></div>' +
       '<div class="todayhead"><div><div class="eyebrow">' + WD_FULL[wi] + '</div><h2 class="dateh">' + s.d + ' ' + MONTHS_G[s.m] + '</h2></div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn sm" data-act="topath" data-k="topath">' + LEVELS[levelIdx(progress().days)].n + ' · серия ' + progress().streak + '</button><span class="prog">Отмечено ' + done + ' из ' + n + '</span>' + (isToday ? '' : '<button class="btn sm" data-act="gotoday" data-k="gotoday">Вернуться к сегодня</button>') + '</div></div>' +
-      '<div class="hl">' + rows + '</div>';
+      (isToday ? cardBlock : '') + '<div class="hl">' + rows + '</div>';
   }
 
   function habitsView() {
@@ -681,7 +774,11 @@ table.g { border-collapse: separate; border-spacing: 0; }
     var t = e.target.closest('[data-act]'); if (!t) return;
     var a = t.dataset.act, hid = t.dataset.hid;
     if (a === 'retry') { load(); return; }
+    if (a === 'closecard') { closeCard(); return; }
+    if (a === 'flip') { if (!todayCardN()) drawCard(); return; }
+    if (a === 'litalink' && inTG && TG.openLink) { e.preventDefault(); try { TG.openLink(t.href); } catch (x) { location.href = t.href; } return; }
     if (!S.ready) return;
+    if (a === 'drawcard') { openCard(); return; }
     if (a === 'tab') { UI.tab = t.dataset.v; UI.scrolled = false; UI.confirm = null; S.meta.tab = UI.tab; mark('meta'); render(); window.scrollTo(0, 0); return; }
     if (a === 'mnav') { var d = new Date(UI.vy, UI.vm + (+t.dataset.v), 1); UI.vy = d.getFullYear(); UI.vm = d.getMonth(); UI.scrolled = false; render(); return; }
     if (a === 'toggle') { toggle(+t.dataset.y, +t.dataset.m, +t.dataset.d, hid); render(); toast(checkAwards()); return; }
@@ -725,6 +822,8 @@ table.g { border-collapse: separate; border-spacing: 0; }
     }
   });
   document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !ovEl.hidden) { closeCard(); return; }
+    if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.id === 'flip') { e.preventDefault(); if (!todayCardN()) drawCard(); return; }
     if (e.key === 'Enter' && e.target && e.target.id === 'newHabit') { e.preventDefault(); addHabit(); }
   });
 
