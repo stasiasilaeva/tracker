@@ -226,6 +226,31 @@ table.g { border-collapse: separate; border-spacing: 0; }
 .ov-sec p { margin: 0; color: var(--tx2); }
 .ov-cta { background: var(--dusk); border: .5px solid var(--purple-dark); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
 .ov-cta p { margin: 0; color: var(--tx2); font-size: 14px; }
+/* дневник практик: заметки и метки */
+.hwrap { display: flex; gap: 8px; align-items: stretch; }
+.hwrap .hrow { flex: 1; min-width: 0; width: auto; }
+.nbtn { width: 52px; flex: none; border: .5px solid var(--mist); background: var(--depth); border-radius: 12px; display: grid; place-items: center; color: var(--tx2); box-shadow: var(--shadow); }
+.nbtn:hover { border-color: var(--purple-dark); }
+.nbtn.has { border-color: var(--glow); color: var(--glow); background: var(--dusk); }
+.nbtn svg { width: 18px; height: 18px; }
+.sheet { position: fixed; inset: 0; z-index: 70; background: rgba(14,11,26,.82); display: flex; align-items: flex-end; justify-content: center; }
+.sheet[hidden] { display: none; }
+.sh-p { width: 100%; max-width: 520px; background: var(--depth); border: .5px solid var(--mist); border-radius: 16px 16px 0 0; padding: 20px 16px max(20px, calc(env(safe-area-inset-bottom, 0px) + 16px)); display: flex; flex-direction: column; gap: 12px; max-height: 92vh; overflow-y: auto; animation: rise .25s ease; }
+@keyframes rise { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.sh-t { font-family: var(--serif); font-size: 24px; line-height: 1.2; }
+.sh-d { font-family: var(--serif); font-size: 18px; color: var(--gold); line-height: 1.2; }
+.tgs { display: flex; flex-wrap: wrap; gap: 8px; }
+.tg { border: .5px solid var(--mist); background: transparent; color: var(--tx2); border-radius: 40px; padding: 6px 14px; font-size: 13px; }
+.tg[aria-pressed="true"] { background: var(--purple); border-color: var(--purple); color: var(--tx); }
+.tgv { border: .5px solid var(--purple-dark); color: var(--tx2); border-radius: 40px; padding: 1px 10px; font-size: 12px; }
+#ntext { width: 100%; background: var(--void); border: 1px solid var(--mist); color: var(--tx); border-radius: 8px; padding: 10px 12px; font: inherit; font-size: 16px; line-height: 1.5; resize: vertical; min-height: 110px; }
+#ntext:focus { border-color: var(--purple); outline: none; }
+.jent { background: var(--depth); border: .5px solid var(--mist); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.jent .jd { font-family: var(--serif); font-size: 19px; color: var(--gold); line-height: 1.2; }
+.jent p { margin: 0; color: var(--tx2); white-space: pre-wrap; overflow-wrap: anywhere; }
+.jcmp { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 560px) { .jcmp { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.jcmp .jent { background: var(--dusk); }
 @media (max-width: 380px) { .srow .icon-btn { width: 32px; height: 32px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
@@ -242,6 +267,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
   <p class="status" id="status" role="status"></p>
 </div>
 <div class="ov" id="ov" hidden role="dialog" aria-modal="true" aria-label="Карта дня"></div>
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-label="Заметка к практике"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -316,8 +342,8 @@ table.g { border-collapse: separate; border-spacing: 0; }
     remove: function (k) { try { localStorage.removeItem(LP + k); return Promise.resolve(); } catch (e) { return Promise.reject(e); } }
   };
 
-  var S = { habits: DEFAULTS.map(function (n, i) { return { id: 'h' + (i + 1), name: n }; }), checks: {}, cards: {}, meta: { v: 1, demoDone: false, tab: 'today' }, demo: true, ready: false, loadErr: false };
-  var UI = { tab: 'today', vy: TY, vm: TM, sel: { y: TY, m: TM, d: TD }, confirm: null, scrolled: false };
+  var S = { habits: DEFAULTS.map(function (n, i) { return { id: 'h' + (i + 1), name: n }; }), checks: {}, cards: {}, notes: {}, meta: { v: 1, demoDone: false, tab: 'today' }, demo: true, ready: false, loadErr: false };
+  var UI = { journal: null, tab: 'today', vy: TY, vm: TM, sel: { y: TY, m: TM, d: TD }, confirm: null, scrolled: false };
 
   /* ---------- расчёты ---------- */
   function rnd(a) { var x = Math.sin(a * 12.9898) * 43758.5453; return x - Math.floor(x); }
@@ -392,6 +418,9 @@ table.g { border-collapse: separate; border-spacing: 0; }
     { id: 'm80', t: 'Месяц в потоке', d: 'Выполнено 80% практик к этому дню месяца', v: function (P) { return P.month80 ? 1 : 0; }, g: 1 },
     { id: 'card1', t: 'Первое послание', d: 'Первая карта дня из колоды «Энергии Литы»', v: function (P) { return P.cards; }, g: 1 },
     { id: 'card7', t: 'Неделя посланий', d: 'Семь карт дня', v: function (P) { return P.cards; }, g: 7 },
+    { id: 'note1', t: 'Первая запись', d: 'Первая заметка в дневнике практики', v: function (P) { return P.notes; }, g: 1 },
+    { id: 'ins5', t: 'Пять осознаний', d: 'Пять записей с меткой «осознание»', v: function (P) { return P.insights; }, g: 5 },
+    { id: 'note20', t: 'Двадцать записей', d: 'Двадцать заметок в дневнике практик', v: function (P) { return P.notes; }, g: 20 },
     { id: 'm100', t: 'Сто отметок', d: 'Сто отмеченных практик', v: function (P) { return P.marks; }, g: 100 },
     { id: 'm300', t: 'Триста отметок', d: 'Триста отмеченных практик', v: function (P) { return P.marks; }, g: 300 }
   ];
@@ -411,7 +440,8 @@ table.g { border-collapse: separate; border-spacing: 0; }
   }
   function progress() {
     var map = dayMap(), n = S.habits.length, keys = Object.keys(map).sort();
-    var P = { days: keys.length, marks: 0, full: 0, streak: 0, best: 0, weeks: 0, month80: false, cards: 0 };
+    var P = { days: keys.length, marks: 0, full: 0, streak: 0, best: 0, weeks: 0, month80: false, cards: 0, notes: 0, insights: 0 };
+    Object.keys(S.notes).forEach(function (k) { var o = S.notes[k] || {}; Object.keys(o).forEach(function (dw) { P.notes++; if ((o[dw].s || []).indexOf('i') >= 0) P.insights++; }); });
     Object.keys(S.cards).forEach(function (k) { P.cards += Object.keys(S.cards[k] || {}).length; });
     keys.forEach(function (k) { P.marks += map[k]; if (n && map[k] >= n) P.full++; });
     var run = 0, prev = null;
@@ -539,6 +569,79 @@ table.g { border-collapse: separate; border-spacing: 0; }
     if (img) { img.onload = go; img.onerror = go; img.src = cardImg(n); if (img.complete && img.naturalWidth) { img.onload = null; go(); } } else { go(); }
   }
 
+  /* ---------- дневник практик: заметки и метки ---------- */
+  var TAGS = [['r', 'сопротивление'], ['h', 'тяжело'], ['e', 'ровно'], ['l', 'лёгкость'], ['i', 'осознание'], ['g', 'благодарность']];
+  var TAGN = {}; TAGS.forEach(function (t) { TAGN[t[0]] = t[1]; });
+  var NOTE_MAX = 400, sheetEl = document.getElementById('sheet'), NS = null;
+  var PEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l4-1 11-11a2.1 2.1 0 00-3-3L5 16l-1 4z"/></svg>';
+  function wkInfo(y, m, d) {
+    var dt = new Date(y, m, d), w = (dt.getDay() + 6) % 7, mon = new Date(y, m, d - w);
+    return { wk: mon.getFullYear() + pad(mon.getMonth() + 1) + pad(mon.getDate()), w: w, mon: mon };
+  }
+  function getNote(hid, y, m, d) { var i = wkInfo(y, m, d), o = S.notes[hid + '|' + i.wk]; return (o && o[i.w]) || null; }
+  function saveNote(hid, y, m, d, text, tags) {
+    var i = wkInfo(y, m, d), k = hid + '|' + i.wk, o = S.notes[k] ? JSON.parse(JSON.stringify(S.notes[k])) : {};
+    text = String(text || '').trim().slice(0, NOTE_MAX);
+    if (!text && !tags.length) delete o[i.w]; else o[i.w] = { t: text, s: tags };
+    leaveDemo();
+    if (Object.keys(o).length) S.notes[k] = o; else delete S.notes[k];
+    mark('n_' + hid + '_' + i.wk);
+  }
+  function noteList(hid) {
+    var out = [];
+    Object.keys(S.notes).forEach(function (k) {
+      var p = k.split('|'); if (p[0] !== hid) return;
+      var y = +p[1].slice(0, 4), m = +p[1].slice(4, 6) - 1, d = +p[1].slice(6, 8), o = S.notes[k];
+      Object.keys(o).forEach(function (w) { var dt = new Date(y, m, d + (+w)); out.push({ dt: dt, y: dt.getFullYear(), m: dt.getMonth(), d: dt.getDate(), t: o[w].t || '', s: o[w].s || [] }); });
+    });
+    out.sort(function (a, b) { return a.dt - b.dt; });
+    return out;
+  }
+  function openNote(hid, y, m, d) {
+    var h = S.habits.filter(function (x) { return x.id === hid; })[0]; if (!h) return;
+    var ex = getNote(hid, y, m, d) || { t: '', s: [] };
+    NS = { hid: hid, y: y, m: m, d: d, tags: (ex.s || []).slice() };
+    sheetEl.innerHTML = '<div class="sh-p"><div class="srow" style="justify-content:space-between;align-items:flex-start"><div><div class="eyebrow">Заметка</div><div class="sh-t">' + esc(h.name || 'Без названия') + '</div><div class="sh-d">' + d + ' ' + MONTHS_G[m] + '</div></div><button class="icon-btn" data-act="nclose" aria-label="Закрыть">×</button></div>' +
+      '<div class="tgs">' + TAGS.map(function (t) { return '<button class="tg" data-act="ntag" data-t="' + t[0] + '" aria-pressed="' + (NS.tags.indexOf(t[0]) >= 0) + '">' + t[1] + '</button>'; }).join('') + '</div>' +
+      '<textarea id="ntext" maxlength="' + NOTE_MAX + '" rows="5" placeholder="Что чувствовала, что приходило, что заметила" aria-label="Заметка к практике"></textarea>' +
+      '<div class="note" style="text-align:right" id="ncnt">0 / ' + NOTE_MAX + '</div>' +
+      '<div class="srow" style="justify-content:flex-end;flex-wrap:wrap">' + ((ex.t || (ex.s || []).length) ? '<button class="btn ghost" data-act="ndel">Удалить</button>' : '') + '<button class="btn primary" data-act="nsave">Сохранить</button></div></div>';
+    var ta = document.getElementById('ntext'); ta.value = ex.t || ''; document.getElementById('ncnt').textContent = ta.value.length + ' / ' + NOTE_MAX;
+    sheetEl.hidden = false; document.body.style.overflow = 'hidden';
+    try { ta.focus({ preventScroll: true }); } catch (e) {}
+  }
+  function closeSheet() { sheetEl.hidden = true; sheetEl.innerHTML = ''; NS = null; if (ovEl.hidden) document.body.style.overflow = ''; }
+  function topTags(list) {
+    var c = {}; list.forEach(function (n) { n.s.forEach(function (t) { c[t] = (c[t] || 0) + 1; }); });
+    return Object.keys(c).sort(function (a, b) { return c[b] - c[a]; }).slice(0, 2).map(function (t) { return TAGN[t]; });
+  }
+  function entryHtml(n, hid, label, editable) {
+    var d = n.d + ' ' + MONTHS_G[n.m] + (n.y !== TY ? ' ' + n.y : '');
+    return '<div class="jent"><div class="jd">' + (label ? label + ' · ' : '') + d + '</div>' +
+      (n.s.length ? '<div class="tgs">' + n.s.map(function (t) { return '<span class="tgv">' + TAGN[t] + '</span>'; }).join('') + '</div>' : '') +
+      (n.t ? '<p>' + esc(n.t) + '</p>' : '') +
+      (editable ? '<button class="btn sm ghost" style="align-self:flex-start" data-act="note" data-hid="' + esc(hid) + '" data-y="' + n.y + '" data-m="' + n.m + '" data-d="' + n.d + '">Изменить</button>' : '') + '</div>';
+  }
+  function journalView(hid) {
+    var h = S.habits.filter(function (x) { return x.id === hid; })[0];
+    if (!h) { UI.journal = null; return habitsView(); }
+    var list = noteList(hid), done = 0;
+    Object.keys(S.checks).forEach(function (k) { var v = (S.checks[k] || {})[hid] | 0; for (var d = 1; d <= 31; d++) if (v & (1 << (d - 1))) done++; });
+    var head = '<div class="mnav"><button class="icon-btn" data-act="jback" aria-label="К списку практик" data-k="jback">‹</button><div class="m" style="font-size:24px;text-align:left;flex:1">' + esc(h.name || 'Без названия') + '</div></div>' +
+      '<p class="note">Дней практики: ' + done + ' · записей: ' + list.length + '</p>';
+    if (!list.length) {
+      return head + '<section class="card stack"><span class="eyebrow">Дневник практики</span><p class="note">Здесь появятся ваши записи: что вы чувствовали, что приходило, как менялось. Добавить заметку можно на экране «Сегодня»: значок карандаша справа от практики.</p></section>';
+    }
+    var cmp = '';
+    if (list.length >= 2) {
+      var half = Math.max(1, Math.floor(list.length / 2)), e = topTags(list.slice(0, half)), l = topTags(list.slice(-half));
+      cmp = '<section class="card stack"><div class="card-t" style="margin:0"><span class="eyebrow">Как было и как стало</span></div><div class="jcmp">' + entryHtml(list[0], hid, 'В начале', false) + entryHtml(list[list.length - 1], hid, 'Сейчас', false) + '</div>' +
+        ((e.length || l.length) ? '<p class="note">Чаще в начале: ' + (e.join(', ') || 'без меток') + '. Чаще сейчас: ' + (l.join(', ') || 'без меток') + '.</p>' : '') + '</section>';
+    }
+    var tl = list.slice().reverse().map(function (n) { return entryHtml(n, hid, '', true); }).join('');
+    return head + cmp + '<section class="card stack"><div class="card-t" style="margin:0"><span class="eyebrow">Все записи</span><span class="note">сначала новые</span></div>' + tl + '</section>';
+  }
+
   /* ---------- сохранение: только изменившиеся ключи, с задержкой, по одному ---------- */
   var dirty = {}, timer = null, busy = false;
   function setStatus(t, err) { var el = document.getElementById('status'); if (el) { el.textContent = t; el.className = 'status' + (err ? ' err' : ''); } }
@@ -546,6 +649,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
   function valueOf(k) {
     if (k === 'habits') return JSON.stringify(S.habits);
     if (k === 'meta') return JSON.stringify(S.meta);
+    if (k.indexOf('n_') === 0) { var nm = k.match(/^n_([A-Za-z0-9]+)_(\d{8})$/), no = nm && S.notes[nm[1] + '|' + nm[2]]; return no && Object.keys(no).length ? JSON.stringify(no) : null; }
     var src = k.indexOf('c_') === 0 ? S.cards : S.checks, o = src[k.slice(2)];
     return o && Object.keys(o).length ? JSON.stringify(o) : null;
   }
@@ -570,7 +674,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
   async function load() {
     S.loadErr = false; render();
     try {
-      var keys = (await store.keys()).filter(function (k) { return k === 'habits' || k === 'meta' || /^[mc]_\d{4}-\d{2}$/.test(k); });
+      var keys = (await store.keys()).filter(function (k) { return k === 'habits' || k === 'meta' || /^[mc]_\d{4}-\d{2}$/.test(k) || /^n_[A-Za-z0-9]+_\d{8}$/.test(k); });
       var vals = await store.getMany(keys);
       var meta = parse(vals.meta);
       var hs = parse(vals.habits);
@@ -579,10 +683,11 @@ table.g { border-collapse: separate; border-spacing: 0; }
         hs = hs.filter(function (h) { return h && typeof h.id === 'string' && typeof h.name === 'string'; }).slice(0, MAXH);
         if (hs.length) S.habits = hs;
       }
-      S.checks = {}; S.cards = {};
+      S.checks = {}; S.cards = {}; S.notes = {};
       keys.forEach(function (k) {
         var o = parse(vals[k]); if (!o || typeof o !== 'object') return;
         if (k.indexOf('m_') === 0) S.checks[k.slice(2)] = o; else if (k.indexOf('c_') === 0) S.cards[k.slice(2)] = o;
+        else if (k.indexOf('n_') === 0) { var mm = k.match(/^n_([A-Za-z0-9]+)_(\d{8})$/); if (mm) S.notes[mm[1] + '|' + mm[2]] = o; }
       });
       S.demo = !S.meta.demoDone && !Array.isArray(hs) && !Object.keys(S.checks).length;
       if (!S.demo && !Array.isArray(S.meta.ach)) { var P0 = progress(); S.meta.ach = earnedNow(P0); S.meta.lvl = levelIdx(P0.days); }
@@ -718,7 +823,9 @@ table.g { border-collapse: separate; border-spacing: 0; }
     var done = 0; S.habits.forEach(function (h) { if (on(s.y, s.m, s.d, h.id)) done++; });
     var rows = S.habits.map(function (h) {
       var o = on(s.y, s.m, s.d, h.id), sr = streakNow(h.id);
-      return '<button class="hrow' + (o ? ' on' : '') + '" aria-pressed="' + o + '" data-act="toggle" data-y="' + s.y + '" data-m="' + s.m + '" data-d="' + s.d + '" data-hid="' + esc(h.id) + '" data-k="r-' + esc(h.id) + '"><span class="ck">' + CHECK + '</span><span class="nm">' + esc(h.name || 'Без названия') + '</span><span class="sr">' + (sr ? 'серия ' + sr : '') + '</span></button>';
+      var hn = getNote(h.id, s.y, s.m, s.d);
+      return '<div class="hwrap"><button class="hrow' + (o ? ' on' : '') + '" aria-pressed="' + o + '" data-act="toggle" data-y="' + s.y + '" data-m="' + s.m + '" data-d="' + s.d + '" data-hid="' + esc(h.id) + '" data-k="r-' + esc(h.id) + '"><span class="ck">' + CHECK + '</span><span class="nm">' + esc(h.name || 'Без названия') + '</span><span class="sr">' + (sr ? 'серия ' + sr : '') + '</span></button>' +
+        '<button class="nbtn' + (hn ? ' has' : '') + '" data-act="note" data-hid="' + esc(h.id) + '" data-y="' + s.y + '" data-m="' + s.m + '" data-d="' + s.d + '" aria-label="' + (hn ? 'Заметка есть: ' : 'Добавить заметку: ') + esc(h.name || '') + '" data-k="n-' + esc(h.id) + '">' + PEN + '</button></div>';
     }).join('');
     var cn = todayCardN(), cc = cn ? cardById(cn) : null;
     var cardBlock = '<section class="card cardday"><img src="' + (cc ? cardImg(cn) : 'lita-back.webp') + '" alt="" loading="lazy"><div class="cd-b"><span class="eyebrow">Карта дня</span>' +
@@ -730,6 +837,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
   }
 
   function habitsView() {
+    if (UI.journal) return journalView(UI.journal);
     var n = S.habits.length;
     var rows = S.habits.map(function (h, i) {
       var del = UI.confirm === 'del:' + h.id;
@@ -737,7 +845,8 @@ table.g { border-collapse: separate; border-spacing: 0; }
         '<button class="icon-btn" data-act="up" data-hid="' + esc(h.id) + '" aria-label="Выше" ' + (i === 0 ? 'disabled' : '') + ' data-k="up-' + esc(h.id) + '">↑</button>' +
         '<button class="icon-btn" data-act="down" data-hid="' + esc(h.id) + '" aria-label="Ниже" ' + (i === n - 1 ? 'disabled' : '') + ' data-k="dn-' + esc(h.id) + '">↓</button>' +
         '<button class="icon-btn" data-act="del" data-hid="' + esc(h.id) + '" aria-label="Удалить практику" ' + (n <= 1 ? 'disabled' : '') + ' data-k="del-' + esc(h.id) + '">×</button></div>' +
-        (del ? '<div class="confirm">Удалить эту практику вместе с отметками? <button class="btn sm" data-act="delyes" data-hid="' + esc(h.id) + '" data-k="delyes">Удалить</button><button class="btn sm ghost" data-act="no" data-k="no">Оставить</button></div>' : '') + '</div>';
+        '<button class="btn sm ghost" style="align-self:flex-start" data-act="journal" data-hid="' + esc(h.id) + '" data-k="jr-' + esc(h.id) + '">Дневник · ' + noteList(h.id).length + '</button>' +
+        (del ? '<div class="confirm">Удалить эту практику вместе с отметками и заметками? <button class="btn sm" data-act="delyes" data-hid="' + esc(h.id) + '" data-k="delyes">Удалить</button><button class="btn sm ghost" data-act="no" data-k="no">Оставить</button></div>' : '') + '</div>';
     }).join('');
     var reset = UI.confirm === 'reset' ?
       '<div class="confirm">Все отметки за все месяцы исчезнут. Продолжить? <button class="btn sm" data-act="resetyes" data-k="resetyes">Очистить</button><button class="btn sm ghost" data-act="no" data-k="no">Отмена</button></div>' :
@@ -771,6 +880,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
 
   /* ---------- события ---------- */
   document.addEventListener('click', function (e) {
+    if (e.target === sheetEl) { closeSheet(); return; }
     var t = e.target.closest('[data-act]'); if (!t) return;
     var a = t.dataset.act, hid = t.dataset.hid;
     if (a === 'retry') { load(); return; }
@@ -779,7 +889,14 @@ table.g { border-collapse: separate; border-spacing: 0; }
     if (a === 'litalink' && inTG && TG.openLink) { e.preventDefault(); try { TG.openLink(t.href); } catch (x) { location.href = t.href; } return; }
     if (!S.ready) return;
     if (a === 'drawcard') { openCard(); return; }
-    if (a === 'tab') { UI.tab = t.dataset.v; UI.scrolled = false; UI.confirm = null; S.meta.tab = UI.tab; mark('meta'); render(); window.scrollTo(0, 0); return; }
+    if (a === 'note') { openNote(hid, +t.dataset.y, +t.dataset.m, +t.dataset.d); return; }
+    if (a === 'ntag') { var tc = t.dataset.t, ix = NS ? NS.tags.indexOf(tc) : -1; if (NS) { if (ix >= 0) NS.tags.splice(ix, 1); else NS.tags.push(tc); t.setAttribute('aria-pressed', ix < 0); } return; }
+    if (a === 'nsave') { if (NS) { saveNote(NS.hid, NS.y, NS.m, NS.d, document.getElementById('ntext').value, NS.tags); closeSheet(); render(); toast(checkAwards()); } return; }
+    if (a === 'ndel') { if (NS) { saveNote(NS.hid, NS.y, NS.m, NS.d, '', []); closeSheet(); render(); } return; }
+    if (a === 'nclose') { closeSheet(); return; }
+    if (a === 'journal') { UI.journal = hid; UI.confirm = null; render(); window.scrollTo(0, 0); return; }
+    if (a === 'jback') { UI.journal = null; render(); window.scrollTo(0, 0); return; }
+    if (a === 'tab') { UI.journal = null; UI.tab = t.dataset.v; UI.scrolled = false; UI.confirm = null; S.meta.tab = UI.tab; mark('meta'); render(); window.scrollTo(0, 0); return; }
     if (a === 'mnav') { var d = new Date(UI.vy, UI.vm + (+t.dataset.v), 1); UI.vy = d.getFullYear(); UI.vm = d.getMonth(); UI.scrolled = false; render(); return; }
     if (a === 'toggle') { toggle(+t.dataset.y, +t.dataset.m, +t.dataset.d, hid); render(); toast(checkAwards()); return; }
     if (a === 'topath') { UI.tab = 'path'; UI.confirm = null; S.meta.tab = 'path'; mark('meta'); render(); window.scrollTo(0, 0); return; }
@@ -799,6 +916,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
         leaveDemo();
         S.habits = S.habits.filter(function (h) { return h.id !== hid; }); mark('habits');
         Object.keys(S.checks).forEach(function (k) { if (S.checks[k][hid] != null) { delete S.checks[k][hid]; mark('m_' + k); } });
+        Object.keys(S.notes).forEach(function (k) { if (k.indexOf(hid + '|') === 0) { var wk = k.split('|')[1]; delete S.notes[k]; mark('n_' + hid + '_' + wk); } });
       }
       UI.confirm = null; render(); return;
     }
@@ -816,12 +934,14 @@ table.g { border-collapse: separate; border-spacing: 0; }
   }
   document.addEventListener('input', function (e) {
     var t = e.target;
+    if (t.id === 'ntext') { var cn = document.getElementById('ncnt'); if (cn) cn.textContent = t.value.length + ' / ' + NOTE_MAX; return; }
     if (t.matches && t.matches('input[data-hid]')) {
       var h = S.habits.find(function (x) { return x.id === t.dataset.hid; });
       if (h) { leaveDemo(); h.name = t.value.slice(0, 40); mark('habits'); }
     }
   });
   document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !sheetEl.hidden) { closeSheet(); return; }
     if (e.key === 'Escape' && !ovEl.hidden) { closeCard(); return; }
     if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.id === 'flip') { e.preventDefault(); if (!todayCardN()) drawCard(); return; }
     if (e.key === 'Enter' && e.target && e.target.id === 'newHabit') { e.preventDefault(); addHabit(); }
