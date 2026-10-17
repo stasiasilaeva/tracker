@@ -251,6 +251,15 @@ table.g { border-collapse: separate; border-spacing: 0; }
 .jcmp { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 560px) { .jcmp { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .jcmp .jent { background: var(--dusk); }
+/* напоминания */
+.rrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.rctl { display: flex; align-items: center; gap: 10px; flex: none; }
+.sel { background: var(--void); border: 1px solid var(--mist); color: var(--tx); border-radius: 8px; padding: 6px 8px; font: inherit; font-size: 14px; }
+.sel:focus { border-color: var(--purple); outline: none; }
+.sw { width: 46px; height: 26px; border-radius: 13px; background: var(--mist); border: 0; position: relative; flex: none; transition: background .2s; padding: 0; }
+.sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--tx2); transition: transform .2s, background .2s; }
+.sw[aria-checked="true"] { background: var(--purple); }
+.sw[aria-checked="true"]::after { transform: translateX(20px); background: var(--tx); }
 @media (max-width: 380px) { .srow .icon-btn { width: 32px; height: 32px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
@@ -282,6 +291,8 @@ table.g { border-collapse: separate; border-spacing: 0; }
   var MAXH = 12;
   /* Колода «Энергии Литы», 50 карт. Ссылка на гримуар появится в блоке под картой, когда её впишут сюда. */
   var LITA_LINK = '';
+  /* Адрес сервиса напоминаний (Cloudflare Worker). Пока пусто, блок «Напоминания» скрыт. */
+  var REMIND_API = 'https://tracker-reminders.stasia-silaeva.workers.dev';
   var LITA = [{"n":1,"name":"Поток","key":"Жизнь всегда движется. Если что-то остановилось, пришло время убрать препятствие.","self":"Ты в безопасности, чтобы двигаться вперёд.","practice":"Написать список того, что больше не хочется нести дальше, и символически отпустить.","affirm":"Я доверяю потоку жизни и позволяю энергии свободно течь через меня."},{"n":2,"name":"Корни","key":"Твоя сила глубже, чем ты думаешь.","self":"Тебе не нужно всё нести одной.","practice":"Посмотреть фотографии предков и поблагодарить их.","affirm":"Я принимаю силу своего рода."},{"n":3,"name":"Тепло солнца","key":"Ты создана, чтобы сиять.","self":"Твой свет нужен миру.","practice":"Сделать что-то красивое для себя.","affirm":"Я позволяю себе сиять."},{"n":4,"name":"Право иметь","key":"Ты имеешь право получать.","self":"Ты достойна большего.","practice":"Написать 100 желаний.","affirm":"Я имею право жить в изобилии."},{"n":5,"name":"Зеркало","key":"Мир отражает то, что живёт внутри.","self":"Всё, что ты ищешь, начинается в тебе.","practice":"Записать три качества, которые раздражают в других людях, и спросить — где это есть во мне.","affirm":"Я готова видеть себя честно."},{"n":6,"name":"Тишина","key":"Ответы приходят в тишине.","self":"В тишине я расскажу тебе больше, чем в шуме.","practice":"Час без телефона и разговоров.","affirm":"В тишине я слышу свою душу."},{"n":7,"name":"Огонь","key":"Назови своё желание.","self":"Твой огонь — это твоя жизненная сила, а не угроза.","practice":"Признаться себе в истинном желании.","affirm":"Я разрешаю своему огню гореть."},{"n":8,"name":"Граница","key":"Твоё «нет» тоже священно.","self":"Граница защищает твою силу, а не отрезает любовь.","practice":"Сказать одно честное «нет».","affirm":"Мои границы священны."},{"n":9,"name":"Доверие","key":"Не всё нужно контролировать.","self":"Жизнь поддерживает тех, кто перестаёт бороться с течением.","practice":"Передать Вселенной одну проблему — мысленно или письменно.","affirm":"Жизнь поддерживает меня."},{"n":10,"name":"Урожай","key":"Пришло время собрать свои плоды.","self":"Ты заслужила увидеть плоды своих усилий.","practice":"Записать 50 своих побед.","affirm":"Я принимаю плоды своего труда."},{"n":11,"name":"Расширение","key":"Старые рамки стали тебе малы — и это не кризис, а рост.","self":"Пространство уже готово принять тебя в новом масштабе.","practice":"Назвать вслух, что в жизни уже стало мало.","affirm":"Мне разрешено расширяться."},{"n":12,"name":"Освобождение","key":"Ты уже выросла из этого — держаться больше не нужно.","self":"Отпускание — это акт силы, а не поражения.","practice":"Мысленно перерезать нить, связывающую с тем, что хочется отпустить.","affirm":"Я отпускаю то, что пережило себя."},{"n":13,"name":"Сила рода","key":"За тобой стоит больше поддержки, чем ты позволяешь себе чувствовать.","self":"Поддержка рода доступна без необходимости заслуживать её.","practice":"Мысленно попросить поддержки у тех, кто был до вас.","affirm":"Я принимаю силу своего рода."},{"n":14,"name":"Новый цикл","key":"Это пик одного цикла и начало следующего.","self":"Ты готова войти в новый цикл легче, чем думаешь.","practice":"Назвать, что хочется оставить позади, прежде чем шагнуть дальше.","affirm":"Я благодарю прошедший цикл и готова к новому."},{"n":15,"name":"Изобилие","key":"Вокруг уже больше ресурса, чем кажется.","self":"Ты можешь видеть полноту жизни прямо сейчас.","practice":"Назвать вслух три вещи, которые уже есть в избытке.","affirm":"Я живу в изобилии, которое уже окружает меня."},{"n":16,"name":"Дыхание","key":"Один вдох — и ты уже здесь.","self":"В теле, не в мыслях, ты найдёшь меня.","practice":"Вдох на четыре счёта, задержка на два, выдох на шесть — трижды.","affirm":"Я возвращаюсь в тело через дыхание."},{"n":17,"name":"Пробуждение","key":"Внутри уже что-то изменилось, даже если снаружи всё по-старому.","self":"Внешний мир догонит твой внутренний сдвиг.","practice":"Записать одну мысль, которая ощущается как «точка невозврата».","affirm":"Я доверяю своему внутреннему пробуждению."},{"n":18,"name":"Импульс","key":"Внутри всё готово — пора сделать действие, которое откладывается.","self":"Момент для действия уже наступил.","practice":"Сделать первый, даже маленький шаг к отложенному делу.","affirm":"Я действую, когда внутри всё готово."},{"n":19,"name":"Баланс","key":"Отдых и действие одинаково важны.","self":"Баланс — это тоже форма мудрости, а не слабости.","practice":"На сегодня сознательно выбрать на одно дело меньше, чем планировалось.","affirm":"Я живу в балансе действия и покоя."},{"n":20,"name":"Восстановление","key":"Тело копит силу в покое, а не в рывке.","self":"Покой возвращает тебе силу быстрее, чем любой рывок.","practice":"Позволить себе тридцать минут отдыха без чувства вины.","affirm":"Мне разрешено отдыхать без причины."},{"n":21,"name":"Голос","key":"То, что молчало внутри — пора сказать, сначала себе.","self":"Твой голос — не угроза для других, а твоя целостность.","practice":"Произнести вслух одну честную фразу о текущем чувстве.","affirm":"Я говорю правду спокойно и ясно."},{"n":22,"name":"Близость","key":"Настоящая близость начинается там, где снята маска «всё хорошо».","self":"Тебя можно любить такой, какая ты есть, без маски.","practice":"Сказать близкому человеку одну искреннюю, не дежурную фразу о своих чувствах.","affirm":"Я разрешаю себе быть увиденной по-настоящему."},{"n":23,"name":"Нежность","key":"Сила и нежность могут жить в одном человеке.","self":"Твоя нежность — это тоже сила, не уступка.","practice":"Сделать один мягкий, неторопливый жест заботы о себе.","affirm":"Мне можно быть нежной."},{"n":24,"name":"Со-настройка","key":"В отношениях важнее услышать, чем доказать правоту.","self":"Связь важнее победы в споре.","practice":"В следующем разговоре сначала переспросить, а не сразу возразить.","affirm":"Я готова услышать, а не только быть услышанной."},{"n":25,"name":"Прощение себе","key":"Прости себе тот шаг, который казался ошибкой — он был частью пути.","self":"Ты делала так, как умела на тот момент.","practice":"Назвать один поступок, за который давно пора простить себя.","affirm":"Я прощаю себе путь, которым я шла."},{"n":26,"name":"Капитал силы","key":"Деньги — это твоя энергия в обмене с миром.","self":"Ты можешь получить эквивалент вложенной силы.","practice":"Вспомнить, сколько реальных сил вложено в работу за последний месяц.","affirm":"Моя энергия имеет ценность, и я получаю её эквивалент."},{"n":27,"name":"Источник","key":"Ресурс не приходит снаружи — он включается внутри.","self":"Тебе не нужно искать то, что уже есть в тебе.","practice":"На пять минут обратиться внутрь, прежде чем искать поддержку снаружи.","affirm":"Я сама себе источник силы."},{"n":28,"name":"Заслуга","key":"Ты заслужила результат — потому что вложилась.","self":"Ты заслужила это признание.","practice":"Назвать вслух одно достижение и добавить «я заслужила это».","affirm":"Я принимаю свои заслуги без оправданий."},{"n":29,"name":"Решимость","key":"Ожидание идеального момента закончилось.","self":"Момент уже наступил — ты просто откладывала признание этого.","practice":"Сделать первый, пусть неидеальный шаг к давно откладываемому делу.","affirm":"Я готова начать сейчас, не идеально, но по-настоящему."},{"n":30,"name":"Щедрость","key":"Щедрость к другим начинается со щедрости к себе.","self":"Ты тоже достойна заботы, не только те, кому ты помогаешь.","practice":"Сделать для себя что-то маленькое и приятное прямо сейчас.","affirm":"Я щедра к себе так же, как к другим."},{"n":31,"name":"Алтарь","key":"Не всё в жизни должно быть рациональным.","self":"Священное пространство можно создать в любую минуту.","practice":"Зажечь свечу и посидеть рядом минуту без задач и телефона.","affirm":"Я создаю священное пространство в своей жизни."},{"n":32,"name":"Звезда","key":"Не нужно видеть весь путь — достаточно одной точки света впереди.","self":"Тебе достаточно видеть один шаг вперёд.","practice":"Назвать одну ясную вещь, к которой хочется идти, не зная остального пути.","affirm":"Мне достаточно видеть один шаг, чтобы двигаться дальше."},{"n":33,"name":"Чаша","key":"Тебе можно принимать заботу без необходимости её заслуживать.","self":"Тебе можно получать просто потому, что ты есть.","practice":"Принять одну заботу или помощь без отказа и без «не стоило».","affirm":"Я открыта принимать заботу и любовь."},{"n":34,"name":"Меч истины","key":"Где-то ты до сих пор говоришь себе «всё нормально», хотя давно не нормально.","self":"Ты готова увидеть это ясно.","practice":"Задать себе один честный вопрос о том, что давно не хочется замечать.","affirm":"Я готова видеть правду без драмы и без жалости к себе."},{"n":35,"name":"Спираль","key":"Это не круг — это виток спирали, чуть выше предыдущего.","self":"Ты не вернулась назад — ты поднялась выше.","practice":"Сравнить, как изменилась реакция на похожую ситуацию по сравнению с прошлым разом.","affirm":"Я расту через повторяющиеся уроки, а не застываю в них."},{"n":36,"name":"Пепел","key":"Что-то должно закончиться, чтобы освободить место новому.","self":"Из пепла всегда вырастает новое — доверься этому.","practice":"Мысленно положить то, что готовы отпустить, в воображаемый костёр.","affirm":"Я доверяю завершению как части роста."},{"n":37,"name":"Мост","key":"Находиться между «было» и «будет» — это нормально.","self":"Тебе не нужно бежать через мост — можно идти своим темпом.","practice":"Сказать себе вслух: «Находиться между — это нормально».","affirm":"Я спокойно прохожу через переход к новому."},{"n":38,"name":"Якорь","key":"В шторме важно не побороть волну, а найти то, что держит на месте.","self":"Твой якорь уже есть, просто назови его.","practice":"Назвать вслух три вещи, которые стабильны прямо сейчас.","affirm":"У меня есть устойчивая опора даже в шторм."},{"n":39,"name":"Сад","key":"Регулярная забота даёт плоды не сразу, но даёт.","self":"Каждый день заботы уже что-то меняет, даже если не видно.","practice":"Сделать одно маленькое, регулярное действие для дела, отношений или себя.","affirm":"Я продолжаю заботиться, доверяя времени."},{"n":40,"name":"Лунный свет","key":"Не вся сила — солнечная и громкая.","self":"Я говорю с тобой не громко, а тихо — прислушайся.","practice":"Задать вопрос и слушать не мысли, а ощущение в теле.","affirm":"Я доверяю своей тихой внутренней мудрости."},{"n":41,"name":"Танец","key":"Тело хочет двигаться, а не только думать.","self":"Твоё тело умеет радоваться — дай ему шанс.","practice":"Включить музыку и подвигаться свободно полминуты, не думая, как это выглядит.","affirm":"Я разрешаю своему телу радоваться."},{"n":42,"name":"Крылья","key":"Тяжесть временна. Лёгкость уже растёт.","self":"Твои крылья уже выросли, просто разверни их.","practice":"Расправить плечи и сделать глубокий вдох, представляя, как груз отпускается.","affirm":"Я готова к лёгкости и полёту."},{"n":43,"name":"Зов сердца","key":"Ответ уже есть — просто страшно его признать.","self":"Я говорю с тобой через зов, который ты давно слышишь.","practice":"Задать главный вопрос и слушать не мысли, а тепло или спокойствие в груди.","affirm":"Я доверяю зову своего сердца."},{"n":44,"name":"Голос предков","key":"Иногда тревога — это не твоя тревога, а память рода.","self":"Различение — первый шаг к освобождению.","practice":"При сильной тревоге спросить: «это моё чувство, или я несу его за кого-то из рода?","affirm":"Я различаю своё и переданное родом."},{"n":45,"name":"Колесо года","key":"Текущая точка — не конец и не начало, а часть естественного движения.","self":"Ты двигаешься в верном ритме, даже когда кажется, что стоишь на месте.","practice":"Отметить, в какой фазе цикла вы находитесь сейчас — подъём, пик, спад или покой.","affirm":"Я доверяю естественному ритму своей жизни."},{"n":46,"name":"Очищение","key":"Не всё, что ты несёшь, — твоё.","self":"Очищение делает тебя легче, не холоднее.","practice":"Представить тёплый поток воды, смывающий всё чужое — мысли, тревоги, ожидания других.","affirm":"Я оставляю только то, что действительно моё."},{"n":47,"name":"Встреча с собой","key":"Та, кем ты хочешь стать, уже существует внутри тебя.","self":"Ты ближе к себе, чем тебе кажется.","practice":"Представить себя через год — увереннее и спокойнее — и посмотреть ей в глаза.","affirm":"Я уже та, кем хочу стать — просто учусь это слышать."},{"n":48,"name":"Чудо","key":"Иногда жизнь даёт знаки — достаточно их заметить.","self":"Я подаю тебе знаки чаще, чем ты замечаешь.","practice":"Вспомнить одно недавнее совпадение и сказать «спасибо» вместо поиска логического объяснения.","affirm":"Я замечаю чудеса в своей жизни и благодарю за них."},{"n":49,"name":"Договор с собой","key":"Дай себе обещание, которое сдержишь.","self":"Маленькая выполненная договорённость восстанавливает доверие к себе быстрее, чем грандиозный план.","practice":"Дать себе одно маленькое, реалистичное обещание и сдержать его сегодня же.","affirm":"Я держу слово, данное самой себе."},{"n":50,"name":"Благодарность","key":"Благодарность — это практика, которая открывает поток.","self":"Чем больше ты замечаешь, тем больше тебе даётся.","practice":"Произнести вслух «спасибо за то, что у меня уже есть» и назвать три конкретные вещи.","affirm":"Я благодарна за то, что уже есть в моей жизни."}];
   var TABS = ['today', 'month', 'habits', 'path'];
   var CHECK = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -342,7 +353,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
     remove: function (k) { try { localStorage.removeItem(LP + k); return Promise.resolve(); } catch (e) { return Promise.reject(e); } }
   };
 
-  var S = { habits: DEFAULTS.map(function (n, i) { return { id: 'h' + (i + 1), name: n }; }), checks: {}, cards: {}, notes: {}, meta: { v: 1, demoDone: false, tab: 'today' }, demo: true, ready: false, loadErr: false };
+  var S = { habits: DEFAULTS.map(function (n, i) { return { id: 'h' + (i + 1), name: n }; }), checks: {}, cards: {}, notes: {}, rem: null, meta: { v: 1, demoDone: false, tab: 'today' }, demo: true, ready: false, loadErr: false };
   var UI = { journal: null, tab: 'today', vy: TY, vm: TM, sel: { y: TY, m: TM, d: TD }, confirm: null, scrolled: false };
 
   /* ---------- расчёты ---------- */
@@ -642,6 +653,56 @@ table.g { border-collapse: separate; border-spacing: 0; }
     return head + cmp + '<section class="card stack"><div class="card-t" style="margin:0"><span class="eyebrow">Все записи</span><span class="note">сначала новые</span></div>' + tl + '</section>';
   }
 
+  /* ---------- напоминания (сервис на Cloudflare) ---------- */
+  var remT = null;
+  function remOn() { return !!(inTG && REMIND_API && TG.initData); }
+  function curTz() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Moscow'; } catch (e) { return 'Europe/Moscow'; } }
+  function remCall(path, body) {
+    return fetch(REMIND_API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ initData: TG.initData }, body)) })
+      .then(function (r) { return r.json(); });
+  }
+  function remSyncNow() {
+    var marked = 0;
+    if (!S.demo) S.habits.forEach(function (h) { if (on(TY, TM, TD, h.id)) marked++; });
+    remCall('/api/sync', { d: TY + '-' + pad(TM + 1) + '-' + pad(TD), marked: marked }).catch(function () {});
+  }
+  function remSync() { if (!remOn() || !S.rem || !S.rem.eOn) return; clearTimeout(remT); remT = setTimeout(remSyncNow, 2500); }
+  function remSave(patch) {
+    var old = Object.assign({}, S.rem); Object.assign(S.rem, patch); render();
+    var b = { mOn: S.rem.mOn, eOn: S.rem.eOn, m: S.rem.m, e: S.rem.e, tz: curTz() };
+    return remCall('/api/settings', b).then(function (r) {
+      if (!r || !r.ok) throw new Error('save');
+      S.rem = r.settings; setStatus('Напоминания сохранены'); render(); if (S.rem.eOn) remSyncNow();
+    }).catch(function () { S.rem = old; setStatus('Не удалось сохранить напоминания', true); render(); });
+  }
+  function remBoot() {
+    var o = null; try { o = new URLSearchParams(location.search).get('o'); } catch (e) {}
+    if (o === 'card') { try { history.replaceState(null, '', location.pathname); } catch (e) {} UI.tab = 'today'; render(); openCard(); }
+    if (!remOn()) return;
+    remCall('/api/me', {}).then(function (r) {
+      if (r && r.settings) { S.rem = r.settings; if (UI.tab === 'habits' && !UI.journal) render(); if (S.rem.eOn) remSyncNow(); }
+    }).catch(function () {});
+  }
+  function timeOpts(from, to, cur) {
+    var o = [];
+    for (var h = from; h <= to; h++) { ['00', '30'].forEach(function (mm) { if (!(h === to && mm === '30')) o.push(pad(h) + ':' + mm); }); }
+    if (o.indexOf(cur) < 0) o.push(cur);
+    o.sort();
+    return o.map(function (v) { return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + v + '</option>'; }).join('');
+  }
+  function remSection() {
+    if (!remOn() || !S.rem) return '';
+    var r = S.rem;
+    function row(w, title, sub, isOn, sel) {
+      return '<div class="rrow"><div style="min-width:0"><div>' + title + '</div><div class="note">' + sub + '</div></div><div class="rctl"><select class="sel" data-w="' + w + '" aria-label="Время: ' + title + '">' + sel + '</select>' +
+        '<button class="sw" role="switch" aria-checked="' + !!isOn + '" data-act="remtog" data-w="' + w + '" aria-label="' + title + '"></button></div></div>';
+    }
+    return '<section class="card stack"><div class="card-t" style="margin:0"><span class="eyebrow">Напоминания</span></div>' +
+      row('m', 'Карта дня утром', 'Сообщение от бота с кнопкой, чтобы вытянуть карту', r.mOn, timeOpts(6, 12, r.m)) +
+      row('e', 'Отметка практик вечером', 'Придёт, только если за день вы ещё ничего не отметили', r.eOn, timeOpts(17, 23, r.e)) +
+      '<p class="note">Время по вашему часовому поясу: ' + esc(curTz()) + '. Отключить можно в любой момент.</p></section>';
+  }
+
   /* ---------- сохранение: только изменившиеся ключи, с задержкой, по одному ---------- */
   var dirty = {}, timer = null, busy = false;
   function setStatus(t, err) { var el = document.getElementById('status'); if (el) { el.textContent = t; el.className = 'status' + (err ? ' err' : ''); } }
@@ -693,6 +754,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
       if (!S.demo && !Array.isArray(S.meta.ach)) { var P0 = progress(); S.meta.ach = earnedNow(P0); S.meta.lvl = levelIdx(P0.days); }
       if (TABS.indexOf(S.meta.tab) >= 0) UI.tab = S.meta.tab;
       S.ready = true;
+      setTimeout(remBoot, 0);
       setStatus(S.demo ? '' : (useCloud ? 'Сохранено' : 'Сохранено на этом устройстве'));
     } catch (e) {
       S.loadErr = true;
@@ -855,7 +917,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
     return demoBanner() +
       '<section class="card stack"><div class="card-t" style="margin:0"><span class="eyebrow">Список практик</span><span class="note">' + n + ' из ' + MAXH + '</span></div><div class="sl">' + rows + '</div>' +
       (n < MAXH ? '<div class="srow"><input type="text" id="newHabit" placeholder="Новая практика" maxlength="40" aria-label="Название новой практики"><button class="btn primary" data-act="add" data-k="add">Добавить</button></div>' : '<p class="note">Достигнут предел в ' + MAXH + ' практик. Удалите ненужную, чтобы добавить новую.</p>') + '</section>' +
-      '<section class="card stack"><div class="card-t" style="margin:0"><span class="eyebrow">Данные</span></div><p class="note">Ваш трекер видите только вы. Названия практик можно менять в любой момент, отметки сохраняются. ' + where + '</p>' + reset + '</section>';
+      remSection() + '<section class="card stack"><div class="card-t" style="margin:0"><span class="eyebrow">Данные</span></div><p class="note">Ваш трекер видите только вы. Названия практик можно менять в любой момент, отметки сохраняются. ' + where + '</p>' + reset + '</section>';
   }
 
   /* ---------- отрисовка ---------- */
@@ -889,6 +951,14 @@ table.g { border-collapse: separate; border-spacing: 0; }
     if (a === 'litalink' && inTG && TG.openLink) { e.preventDefault(); try { TG.openLink(t.href); } catch (x) { location.href = t.href; } return; }
     if (!S.ready) return;
     if (a === 'drawcard') { openCard(); return; }
+    if (a === 'remtog') {
+      if (!S.rem) return;
+      var w = t.dataset.w, key2 = w === 'm' ? 'mOn' : 'eOn', next = !S.rem[key2], patch = {}; patch[key2] = next;
+      if (next && inTG && ver('6.9') && TG.requestWriteAccess) {
+        try { TG.requestWriteAccess(function (allowed) { if (allowed) remSave(patch); else setStatus('Чтобы получать напоминания, разрешите боту писать вам', true); }); } catch (x) { remSave(patch); }
+      } else remSave(patch);
+      return;
+    }
     if (a === 'note') { openNote(hid, +t.dataset.y, +t.dataset.m, +t.dataset.d); return; }
     if (a === 'ntag') { var tc = t.dataset.t, ix = NS ? NS.tags.indexOf(tc) : -1; if (NS) { if (ix >= 0) NS.tags.splice(ix, 1); else NS.tags.push(tc); t.setAttribute('aria-pressed', ix < 0); } return; }
     if (a === 'nsave') { if (NS) { saveNote(NS.hid, NS.y, NS.m, NS.d, document.getElementById('ntext').value, NS.tags); closeSheet(); render(); toast(checkAwards()); } return; }
@@ -898,7 +968,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
     if (a === 'jback') { UI.journal = null; render(); window.scrollTo(0, 0); return; }
     if (a === 'tab') { UI.journal = null; UI.tab = t.dataset.v; UI.scrolled = false; UI.confirm = null; S.meta.tab = UI.tab; mark('meta'); render(); window.scrollTo(0, 0); return; }
     if (a === 'mnav') { var d = new Date(UI.vy, UI.vm + (+t.dataset.v), 1); UI.vy = d.getFullYear(); UI.vm = d.getMonth(); UI.scrolled = false; render(); return; }
-    if (a === 'toggle') { toggle(+t.dataset.y, +t.dataset.m, +t.dataset.d, hid); render(); toast(checkAwards()); return; }
+    if (a === 'toggle') { toggle(+t.dataset.y, +t.dataset.m, +t.dataset.d, hid); render(); toast(checkAwards()); remSync(); return; }
     if (a === 'topath') { UI.tab = 'path'; UI.confirm = null; S.meta.tab = 'path'; mark('meta'); render(); window.scrollTo(0, 0); return; }
     if (a === 'pick') { UI.sel = { y: +t.dataset.y, m: +t.dataset.m, d: +t.dataset.d }; render(); return; }
     if (a === 'wk') { var s = UI.sel, nd = new Date(s.y, s.m, s.d + (+t.dataset.v)); UI.sel = { y: nd.getFullYear(), m: nd.getMonth(), d: nd.getDate() }; render(); return; }
@@ -921,7 +991,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
       UI.confirm = null; render(); return;
     }
     if (a === 'reset') { UI.confirm = 'reset'; render(); return; }
-    if (a === 'resetyes') { leaveDemo(); Object.keys(S.checks).forEach(function (k) { mark('m_' + k); }); S.checks = {}; UI.confirm = null; render(); return; }
+    if (a === 'resetyes') { remSync(); leaveDemo(); Object.keys(S.checks).forEach(function (k) { mark('m_' + k); }); S.checks = {}; UI.confirm = null; render(); return; }
     if (a === 'no') { UI.confirm = null; render(); return; }
   });
   function addHabit() {
@@ -945,6 +1015,11 @@ table.g { border-collapse: separate; border-spacing: 0; }
     if (e.key === 'Escape' && !ovEl.hidden) { closeCard(); return; }
     if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.id === 'flip') { e.preventDefault(); if (!todayCardN()) drawCard(); return; }
     if (e.key === 'Enter' && e.target && e.target.id === 'newHabit') { e.preventDefault(); addHabit(); }
+  });
+
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t && t.matches && t.matches('select.sel') && S.rem) { var p = {}; p[t.dataset.w === 'm' ? 'm' : 'e'] = t.value; remSave(p); }
   });
 
   load();
