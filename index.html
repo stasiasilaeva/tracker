@@ -928,6 +928,15 @@ table.g { border-collapse: separate; border-spacing: 0; }
     return fetch(REMIND_API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ initData: TG.initData }, body)) })
       .then(function (r) { return r.json(); });
   }
+  /* статистика: одно событие отправляется не чаще раза в день */
+  var hitSent = {};
+  function hit(ev) {
+    if (!remOn()) return;
+    var day = TY + '-' + pad(TM + 1) + '-' + pad(TD), k = 'hit_' + ev;
+    if (hitSent[k] === day) return; hitSent[k] = day;
+    try { if (localStorage.getItem(k) === day) return; localStorage.setItem(k, day); } catch (e) {}
+    remCall('/api/hit', { ev: ev }).catch(function () {});
+  }
   function remSyncNow() {
     var marked = 0;
     if (!S.demo) S.habits.forEach(function (h) { if (on(TY, TM, TD, h.id)) marked++; });
@@ -954,7 +963,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
   function remBoot() {
     medBoot();
     var o = null; try { o = new URLSearchParams(location.search).get('o'); } catch (e) {}
-    if (o === 'card') { try { history.replaceState(null, '', location.pathname); } catch (e) {} UI.tab = 'today'; render(); openCard(); }
+    if (o === 'card') { hit('card'); try { history.replaceState(null, '', location.pathname); } catch (e) {} UI.tab = 'today'; render(); openCard(); }
     if (!remOn()) return;
     remCall('/api/me', {}).then(function (r) {
       if (r && r.settings) {
@@ -1210,6 +1219,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
     var v = document.getElementById('view');
     if (S.loadErr) { v.innerHTML = errorView(); return; }
     if (!S.ready) { v.innerHTML = skeleton(); return; }
+    hit('open'); hit(UI.tab);
     v.innerHTML = UI.tab === 'today' ? todayView() : (UI.tab === 'habits' ? habitsView() : (UI.tab === 'path' ? pathView() : monthView()));
     var g2 = document.querySelector('.gridwrap');
     if (g2) {
@@ -1230,16 +1240,17 @@ table.g { border-collapse: separate; border-spacing: 0; }
     if (a === 'retry') { load(); return; }
     if (a === 'closecard') { closeCard(); return; }
     if (a === 'flip') { if (!todayCardN()) drawCard(); return; }
+    if (a === 'buylink') hit('shop');
     if (a === 'buylink' && inTG && TG.openLink) { e.preventDefault(); try { TG.openLink(t.href); } catch (x) { location.href = t.href; } return; }
     if (a === 'invitelink' && inTG && TG.openLink) { e.preventDefault(); try { TG.openLink(t.href); } catch (x) { location.href = t.href; } return; }
     if (a === 'litalink' && inTG && TG.openLink) { e.preventDefault(); try { TG.openLink(t.href); } catch (x) { location.href = t.href; } return; }
     if (!S.ready) return;
-    if (a === 'drawcard') { openCard(); return; }
-    if (a === 'pray') { openPrayer(t.dataset.id); return; }
-    if (a === 'med') { openMed(t.dataset.id); return; }
-    if (a === 'medlist') { openMedList(); return; }
-    if (a === 'pack') { openPack(t.dataset.key); return; }
-    if (a === 'codeopen') { openCode(); return; }
+    if (a === 'drawcard') { hit('card'); openCard(); return; }
+    if (a === 'pray') { hit('pray'); openPrayer(t.dataset.id); return; }
+    if (a === 'med') { hit('med'); openMed(t.dataset.id); return; }
+    if (a === 'medlist') { hit('med'); openMedList(); return; }
+    if (a === 'pack') { hit('shop'); openPack(t.dataset.key); return; }
+    if (a === 'codeopen') { hit('shop'); openCode(); return; }
     if (a === 'codeapply') { var ci = document.getElementById('cdin'); var cv = ci ? ci.value.trim().replace(/^.*[?&]startapp=m_/, '').replace(/^m_/, '') : ''; if (cv) redeem(cv, false); return; }
     if (a === 'medplay') { medPlayPause(); return; }
     if (a === 'prayread') { prayerRead(); return; }
@@ -1253,14 +1264,14 @@ table.g { border-collapse: separate; border-spacing: 0; }
     }
     if (a === 'note') { openNote(hid, +t.dataset.y, +t.dataset.m, +t.dataset.d); return; }
     if (a === 'ntag') { var tc = t.dataset.t, ix = NS ? NS.tags.indexOf(tc) : -1; if (NS) { if (ix >= 0) NS.tags.splice(ix, 1); else NS.tags.push(tc); t.setAttribute('aria-pressed', ix < 0); } return; }
-    if (a === 'nsave') { if (NS) { saveNote(NS.hid, NS.y, NS.m, NS.d, document.getElementById('ntext').value, NS.tags); closeSheet(); render(); toast(checkAwards()); } return; }
+    if (a === 'nsave') { hit('note'); if (NS) { saveNote(NS.hid, NS.y, NS.m, NS.d, document.getElementById('ntext').value, NS.tags); closeSheet(); render(); toast(checkAwards()); } return; }
     if (a === 'ndel') { if (NS) { saveNote(NS.hid, NS.y, NS.m, NS.d, '', []); closeSheet(); render(); } return; }
     if (a === 'nclose') { closeSheet(); return; }
     if (a === 'journal') { UI.journal = hid; UI.confirm = null; render(); window.scrollTo(0, 0); return; }
     if (a === 'jback') { UI.journal = null; render(); window.scrollTo(0, 0); return; }
     if (a === 'tab') { UI.journal = null; UI.tab = t.dataset.v; UI.scrolled = false; UI.confirm = null; S.meta.tab = UI.tab; mark('meta'); render(); window.scrollTo(0, 0); return; }
     if (a === 'mnav') { var d = new Date(UI.vy, UI.vm + (+t.dataset.v), 1); UI.vy = d.getFullYear(); UI.vm = d.getMonth(); UI.scrolled = false; render(); return; }
-    if (a === 'toggle') { toggle(+t.dataset.y, +t.dataset.m, +t.dataset.d, hid); render(); toast(checkAwards()); remSync(); return; }
+    if (a === 'toggle') { hit('mark'); toggle(+t.dataset.y, +t.dataset.m, +t.dataset.d, hid); render(); toast(checkAwards()); remSync(); return; }
     if (a === 'topath') { UI.tab = 'path'; UI.confirm = null; S.meta.tab = 'path'; mark('meta'); render(); window.scrollTo(0, 0); return; }
     if (a === 'pick') { UI.sel = { y: +t.dataset.y, m: +t.dataset.m, d: +t.dataset.d }; render(); return; }
     if (a === 'wk') { var s = UI.sel, nd = new Date(s.y, s.m, s.d + (+t.dataset.v)); UI.sel = { y: nd.getFullYear(), m: nd.getMonth(), d: nd.getDate() }; render(); return; }
