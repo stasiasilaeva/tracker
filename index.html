@@ -271,6 +271,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
 .pr-it span.ar { color: var(--muted); font-size: 18px; flex: none; }
 .pr-text { text-align: center; font-family: var(--serif); font-size: 22px; line-height: 1.65; white-space: pre-line; color: var(--tx); padding: 8px 4px; }
 /* медитации */
+.wh-p { margin: 0 0 8px; }
 .moon-h { display: flex; align-items: center; gap: 14px; }
 .moon-e { font-size: 44px; line-height: 1; }
 .moon-c { display: flex; align-items: center; gap: 12px; }
@@ -1269,6 +1270,75 @@ table.g { border-collapse: separate; border-spacing: 0; }
       '<div class="ov-sec"><div class="eyebrow">Мини-практика дня</div><p>' + esc(m.ph.p) + '</p></div></section>';
   }
 
+  /* ---------- Колесо Года ---------- */
+  var WHEEL = [
+    { id: 'samhain', n: 'Самайн', sub: 'Ночь предков и конец года', fix: [9, 31],
+      d: 'Самайн — кельтский Новый год и самая тонкая грань между мирами. Урожай собран, природа уходит в сон, и сейчас проще всего почувствовать связь с теми, кто был до нас. Для работы с Родом это одна из самых сильных ночей года.',
+      pr: ['Поставьте свечу и фото или имя близкого человека из Рода. Скажите спасибо за то, что от него получили.', 'Напишите на листе, что вы закрываете в этом году, и безопасно сожгите лист.', 'Накройте небольшой стол для предков: хлеб, вода, что-то сладкое. Оставьте до утра.'],
+      c: { name: 'Скрутка «Исцеление и защита Рода»', link: 'https://sila-anastasiia.ru/scrutka_iscelenie_roda' } },
+    { id: 'yule', n: 'Йоль', sub: 'Возвращение света', yr: 'yule',
+      d: 'Йоль — самая длинная ночь года и поворот к свету: после неё день начинает прибывать. Время тишины, отдыха и тихих намерений на будущий год. Не нужно ничего доказывать, достаточно быть.',
+      pr: ['Побудьте несколько минут в темноте, потом зажгите одну свечу и посмотрите на огонь.', 'Выберите одно слово года и запишите его там, где увидите.', 'Сделайте себе тёплое: ужин, ванна, вечер без планов.'],
+      c: { name: 'Скрутка «Восстановление энергии»', link: 'https://sila-anastasiia.ru/scrutka_energy' } },
+    { id: 'imbolc', n: 'Имболк', sub: 'Первая искра', fix: [1, 2],
+      d: 'Имболк — середина зимы, первый свет после долгой тьмы. Ещё холодно, но под снегом уже что-то просыпается. Время очищения и первых несмелых намерений.',
+      pr: ['Приведите в порядок один угол дома и протрите окна, чтобы впустить свет.', 'Зажгите свечу и вслух скажите, что хотите вырастить к весне.', 'Запишите три маленьких шага к этому. Только маленьких.'],
+      c: { name: 'Скрутка «Активация»', link: 'https://sila-anastasiia.ru/scrutka_activacia' } },
+    { id: 'ostara', n: 'Остара', sub: 'Равновесие и начало', yr: 'ostara',
+      d: 'Остара — весеннее равноденствие: день равен ночи, а дальше светлого времени становится больше. Праздник пробуждения и новых начал. Хорошо делать то, что вы откладывали всю зиму.',
+      pr: ['Посадите или прорастите семена, хоть на подоконнике.', 'Сделайте один шаг к тому, что откладывали. Один, но сегодня.', 'Напишите, что вы хотите «посадить» в эту весну, и что для этого нужно.'],
+      c: { name: 'Скрутка «Желания»', link: 'https://sila-anastasiia.ru/scrutka_ghelanie' } },
+    { id: 'beltane', n: 'Белтайн', sub: 'Огонь жизни', fix: [4, 1],
+      d: 'Белтайн — праздник цветения, любви и радости, начало лета в старом календаре. Энергии много, и она хочет двигаться, а не ждать. Время себя любить и позволять себе удовольствие.',
+      pr: ['Выйдите на природу и постойте босиком на земле или траве.', 'Купите или соберите себе букет, просто так.', 'Включите любимую музыку и потанцуйте, пока не станет легче.'],
+      c: { name: 'Скрутка «Любовь»', link: 'https://sila-anastasiia.ru/scrutka_love' } },
+    { id: 'litha', n: 'Лита', sub: 'Пик солнца', yr: 'litha',
+      d: 'Лита — летнее солнцестояние, самый длинный день года. Сила солнца на пике, и всё, что вы начали, расцветает. Время показываться, радоваться и замечать, что уже получилось.',
+      pr: ['Встретьте рассвет или проводите закат без телефона.', 'Выпишите, что у вас за этот год уже расцвело.', 'Сплетите венок или поставьте в доме полевые цветы.'],
+      c: { name: 'Скрутка «Проявленность»', link: 'https://sila-anastasiia.ru/scrutka_proyavlenosti' } },
+    { id: 'lughnasadh', n: 'Лугнасад', sub: 'Первый урожай', fix: [7, 1],
+      d: 'Лугнасад — праздник первого урожая и благодарности за труд. Лето ещё в силе, но уже видно, что выросло. Время честно посмотреть на свои плоды и поблагодарить за них.',
+      pr: ['Испеките хлеб или купите свежий и разделите с кем-то.', 'Напишите десять благодарностей за этот год. Мелкие тоже считаются.', 'Поделитесь с кем-то тем, что у вас в избытке: временем, словом, вещью.'],
+      c: { name: 'Скрутка «Благодарность»', link: 'https://sila-anastasiia.ru/scrutka_blagodarnosti' } },
+    { id: 'mabon', n: 'Мабон', sub: 'Равновесие и итоги', yr: 'mabon',
+      d: 'Мабон — осеннее равноденствие: день снова равен ночи, второй урожай собран. Время подвести итоги и решить, что вы несёте дальше, а что оставляете.',
+      pr: ['Разделите лист пополам: слева то, что несёте дальше, справа то, что оставляете.', 'Погуляйте в лесу или парке и соберите несколько красивых листьев.', 'Подготовьте дом к осени: плед, свечи, что-то тёплое и вкусное.'],
+      c: { name: 'Свеча «Точка Равновесия»', link: 'https://sila-anastasiia.com/samhain_c_ravnov' } }
+  ];
+  /* Солнцестояния и равноденствия по годам: [месяц, день] (даты по Москве). */
+  var ASTRO = {
+    2026: { ostara: [2, 20], litha: [5, 21], mabon: [8, 23], yule: [11, 21] },
+    2027: { ostara: [2, 20], litha: [5, 21], mabon: [8, 23], yule: [11, 22] },
+    2028: { ostara: [2, 20], litha: [5, 20], mabon: [8, 22], yule: [11, 21] },
+    2029: { ostara: [2, 20], litha: [5, 21], mabon: [8, 22], yule: [11, 21] },
+    2030: { ostara: [2, 20], litha: [5, 21], mabon: [8, 22], yule: [11, 21] }
+  };
+  function wheelDate(w, y) {
+    if (w.fix) return new Date(y, w.fix[0], w.fix[1]);
+    var a = ASTRO[y] || { ostara: [2, 20], litha: [5, 21], mabon: [8, 22], yule: [11, 21] };
+    var m = a[w.yr]; return new Date(y, m[0], m[1]);
+  }
+  function wheelNow() {
+    var today = new Date(TY, TM, TD);
+    for (var k = 0; k < WHEEL.length; k++) {
+      for (var y = TY - 1; y <= TY + 1; y++) {
+        var diff = Math.round((wheelDate(WHEEL[k], y) - today) / 864e5);
+        if (diff <= 7 && diff >= -1) return { w: WHEEL[k], diff: diff, date: wheelDate(WHEEL[k], y) };
+      }
+    }
+    return null;
+  }
+  function wheelBlock() {
+    var r = wheelNow(); if (!r) return '';
+    var w = r.w, when = r.diff === 0 ? 'Сегодня' : (r.diff === 1 ? 'Завтра' : (r.diff < 0 ? 'Вчера' : 'Через ' + r.diff + ' ' + plural(r.diff, 'день', 'дня', 'дней')));
+    return '<section class="card stack"><div class="eyebrow">Колесо Года · ' + when + ', ' + r.date.getDate() + ' ' + MONTHS_G[r.date.getMonth()] + '</div>' +
+      '<div><h3 class="md-t">' + esc(w.n) + '</h3><div class="md-meta">' + esc(w.sub) + '</div></div>' +
+      '<p class="md-d">' + esc(w.d) + '</p>' +
+      '<div class="ov-sec"><div class="eyebrow">Что можно сделать</div>' + w.pr.map(function (t) { return '<p class="wh-p">· ' + esc(t) + '</p>'; }).join('') + '</div>' +
+      '<div class="moon-cn">' + esc(w.c.name) + '</div>' +
+      '<div style="display:flex"><a class="btn ghost" href="' + esc(w.c.link) + '" data-act="buylink" target="_blank" rel="noopener">Свеча к празднику в лавке</a></div></section>';
+  }
+
   function todayView() {
     var s = UI.sel, dt = new Date(s.y, s.m, s.d), wi = (dt.getDay() + 6) % 7;
     var mon = new Date(s.y, s.m, s.d - wi), n = S.habits.length;
@@ -1293,7 +1363,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
     return demoBanner() +
       '<div class="daybar"><button class="icon-btn" data-act="wk" data-v="-7" aria-label="Предыдущая неделя" data-k="wprev">‹</button><div class="strip">' + chips + '</div><button class="icon-btn" data-act="wk" data-v="7" aria-label="Следующая неделя" data-k="wnext">›</button></div>' +
       '<div class="todayhead"><div><div class="eyebrow">' + WD_FULL[wi] + '</div><h2 class="dateh">' + s.d + ' ' + MONTHS_G[s.m] + '</h2></div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn sm" data-act="topath" data-k="topath">' + LEVELS[levelIdx(progress().days)].n + ' · серия ' + progress().streak + '</button><span class="prog">Отмечено ' + done + ' из ' + n + '</span>' + (isToday ? '' : '<button class="btn sm" data-act="gotoday" data-k="gotoday">Вернуться к сегодня</button>') + '</div></div>' +
-      (isToday ? cardBlock + moonBlock() + medBlock() + prayBlock() : '') + '<div class="hl">' + rows + '</div>';
+      (isToday ? cardBlock + wheelBlock() + moonBlock() + medBlock() + prayBlock() : '') + '<div class="hl">' + rows + '</div>';
   }
 
   function habitsView() {
