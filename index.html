@@ -271,6 +271,11 @@ table.g { border-collapse: separate; border-spacing: 0; }
 .pr-it span.ar { color: var(--muted); font-size: 18px; flex: none; }
 .pr-text { text-align: center; font-family: var(--serif); font-size: 22px; line-height: 1.65; white-space: pre-line; color: var(--tx); padding: 8px 4px; }
 /* медитации */
+.moon-h { display: flex; align-items: center; gap: 14px; }
+.moon-e { font-size: 44px; line-height: 1; }
+.moon-c { display: flex; align-items: center; gap: 12px; }
+.moon-c img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; flex: none; }
+.moon-cn { font-family: var(--serif); font-size: 19px; line-height: 1.2; }
 .md-feat { display: flex; flex-direction: column; gap: 10px; }
 .md-t { font-family: var(--serif); font-size: 24px; line-height: 1.2; margin: 0; font-weight: 400; }
 .md-meta { font-size: 12px; color: var(--muted); letter-spacing: .5px; }
@@ -1196,6 +1201,72 @@ table.g { border-collapse: separate; border-spacing: 0; }
     return out;
   }
 
+  /* ---------- Луна, свеча и практика дня ---------- */
+  var SYN = 29.530588853;
+  function moonAge(d) {
+    var t = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 12) / 864e5;
+    var a = (t - Date.UTC(2000, 0, 6, 18, 14) / 864e5) % SYN;
+    return a < 0 ? a + SYN : a;
+  }
+  var MOON = [
+    { n: 'Новолуние', e: '🌑', pool: ['tower', 'energy'], why: 'Новолуние — время тишины и начала. Берите свечи, которые помогают войти в новый цикл спокойно.',
+      p: 'Новолуние — про тишину и намерение. Сядьте на пять минут без телефона. Спросите себя: чего я хочу в этом цикле? Запишите одну строчку и не переписывайте. Достаточно, чтобы она была честной.' },
+    { n: 'Растущий серп', e: '🌒', pool: ['wish', 'abund', 'activ', 'thanks'], why: 'Луна только начинает расти, самое время засеять и расширить взгляд на возможности.',
+      p: 'Растущая луна любит маленькие действия. Сделайте сегодня одно, которое давно откладываете: напишите человеку, отправьте счёт, назовите цену вслух. Не идеально, а сделано.' },
+    { n: 'Первая четверть', e: '🌓', pool: ['clients', 'show', 'power', 'intuit'], why: 'Первая четверть — время действовать и показываться. Рост уже идёт, добавьте ему решимости.',
+      p: 'Первая четверть проверяет решимость. Спросите себя: где я сегодня держусь за «потом»? Выберите одно дело и сделайте его первым, до новостей и почты. Потом отметьте это в трекере.' },
+    { n: 'Растущая луна', e: '🌔', pool: ['tree', 'horn', 'fem', 'love'], why: 'Луна почти полная, всё посеянное набирает силу. Хорошо закреплять рост и притяжение.',
+      p: 'Сейчас хорошо замечать, что уже выросло. Выпишите три вещи, которые у вас получились за последнюю неделю. Без «но» и «зато». Если хочется добавить «но», просто не добавляйте.' },
+    { n: 'Полнолуние', e: '🌕', pool: ['sun', 'scale'], why: 'Полнолуние — пик силы и видимости. Хорошо защищать то, что построено, и выходить на свет.',
+      p: 'В полнолуние всё становится ярче, в том числе то, что мешает. Назовите вслух одну вещь, которую вы готовы отпустить к убыванию. А потом сделайте то, что давно хотели показать миру: один пост, одну запись, одно сообщение.' },
+    { n: 'Убывающая луна', e: '🌖', pool: ['clean', 'chan', 'katclean'], why: 'Луна идёт на убыль, самое время очищаться и убирать лишнее.',
+      p: 'Убывающая луна — про освобождение места. Откройте шкаф, сумку или переписку и уберите одну вещь, которая вам больше не нужна. Освобождённое место работает так же, как освобождённая голова.' },
+    { n: 'Последняя четверть', e: '🌗', pool: ['forgive', 'litclean'], why: 'Последняя четверть — время подводить итоги и прощать. Лишнее уходит вместе с луной.',
+      p: 'Возьмите лист и разделите пополам. Слева то, что вы забираете в новый цикл, справа то, что оставляете. Не спорьте с собой, пишите, пока не закончится.' },
+    { n: 'Убывающий серп', e: '🌘', pool: ['energy', 'forgive', 'clean'], why: 'Это тихие дни перед новым циклом. Восстановитесь и закройте то, что не завершено.',
+      p: 'Последние дни цикла — про благодарность. Скажите «спасибо» Роду за что-то конкретное, что получили в этом месяце. Вслух, своими словами. Благодарить можно и за трудное: это делает вас устойчивее.' }
+  ];
+  var SHOP_URL = 'https://sila-anastasiia.ru/';
+  var CANDLES = {
+    tower: { name: 'Скрутка «Башня»', lun: 'новолуние', d: 'Трансформация, заземление, новый уровень.', link: SHOP_URL + 'scrutka_bashnya' },
+    energy: { name: 'Скрутка «Восстановление энергии»', lun: 'любая луна', d: 'Восстановление ауры после чисток и ритуалов.', link: SHOP_URL + 'scrutka_energy' },
+    wish: { name: 'Скрутка «Желания»', lun: 'растущая луна', d: 'Исполнение желания.', link: SHOP_URL + 'scrutka_ghelanie' },
+    abund: { name: 'Скрутка «Изобилие»', lun: 'растущая луна', d: 'Финансовые потоки, открытие дорог.', link: SHOP_URL + 'scrutka_izobilie', img: 'candle-abund.webp' },
+    activ: { name: 'Скрутка «Активация»', lun: 'растущая луна', d: 'Рост и процветание: деньги, любовь, дороги.', link: SHOP_URL + 'scrutka_activacia' },
+    thanks: { name: 'Скрутка «Благодарность»', lun: 'растущая луна', d: 'Активация благодарности, привлечение щедрых людей.', link: SHOP_URL + 'scrutka_blagodarnosti' },
+    clients: { name: 'Скрутка «Привлечение клиентов»', lun: 'растущая луна', d: 'Поток клиентов, доверие. Зажигайте рядом с тем, чем зарабатываете.', link: SHOP_URL + 'scrutka_privlechenie_clientov', img: 'candle-clients.webp' },
+    show: { name: 'Скрутка «Проявленность»', lun: 'растущая луна', d: 'Обаяние, коммуникация, заметность.', link: SHOP_URL + 'scrutka_proyavlenosti' },
+    power: { name: 'Скрутка «Сила и очищение»', lun: 'растущая луна', d: 'Открытие дорог, уверенность в начале дела.', link: SHOP_URL + 'scrutka_sila_ochishenie' },
+    intuit: { name: 'Скрутка «Интуиция»', lun: 'растущая луна', d: 'Усиление интуиции.', link: SHOP_URL + 'scrutka_intuiciya' },
+    tree: { name: 'Скрутка «Древо Изобилия»', lun: 'растущая луна', d: 'Финансовый рост и накопление, устойчивый рост.', link: SHOP_URL + 'scrutka_drevo', img: 'candle-tree.webp' },
+    horn: { name: 'Скрутка «Рог изобилия»', lun: 'растущая луна', d: 'Финансовые потоки, деньги.', link: SHOP_URL + 'scrutka_rog_izobiliya' },
+    fem: { name: 'Скрутка «Женственность»', lun: 'растущая луна', d: 'Раскрытие женской энергии.', link: SHOP_URL + 'scrutka_ghenstvennosti' },
+    love: { name: 'Скрутка «Любовь»', lun: 'растущая луна', d: 'Любовь к себе, улучшение отношений.', link: SHOP_URL + 'scrutka_love' },
+    sun: { name: 'Скрутка «Солнечный зайчик»', lun: 'полнолуние', d: 'Защита от негатива и зависти.', link: SHOP_URL + 'scrutka_solnechnii_zaichik' },
+    scale: { name: 'Скрутка «Проявленность и масштаб»', lun: 'растущая луна', d: 'Страхи, новый уровень. Хороша, когда пора, чтобы вас заметили.', link: SHOP_URL + 'scrutka_proyavlenosti_mashtab', img: 'candle-scale.webp' },
+    clean: { name: 'Скрутка «Чистка и защита»', lun: 'убывающая луна', d: 'Негатив с пространства, защита на лунный цикл.', link: SHOP_URL + 'scrutka_chistka_zashita' },
+    chan: { name: 'Скрутка «Очищение финансовых каналов»', lun: 'убывающая луна', d: 'Чистка каналов, убирает негатив.', link: SHOP_URL + 'scrutka_ochishenie_kanala' },
+    katclean: { name: 'Набор «Чистка и защита»', lun: 'убывающая луна', d: '5 катаных свечей. Очищение и снятие негатива, защита пространства.', link: 'https://sila-anastasiia.lpxl.ru/chistka_i_zashita' },
+    forgive: { name: 'Скрутка «Прощение»', lun: 'убывающая луна', d: 'Прощение себя и других, восстановление балансов.', link: SHOP_URL + 'scrutka_proshenie' },
+    litclean: { name: 'Литая свеча «Чистка и защита»', lun: 'убывающая луна', d: 'Самая мощная на чистку. Горение 2+ часа.', link: 'https://sila-anastasiia.lpxl.ru/zashita_chistka' }
+  };
+  function moonInfo() {
+    var age = moonAge(new Date(TY, TM, TD));
+    var i = age < 1.85 || age >= 27.68 ? 0 : Math.min(7, Math.floor((age - 1.85) / 3.69) + 1);
+    var ph = MOON[i];
+    return { age: age, ph: ph, day: Math.min(30, Math.floor(age) + 1), lit: Math.round((1 - Math.cos(2 * Math.PI * age / SYN)) / 2 * 100), candle: CANDLES[ph.pool[Math.floor(age) % ph.pool.length]] };
+  }
+  function moonBlock() {
+    var m = moonInfo(), c = m.candle;
+    return '<section class="card stack"><div class="eyebrow">Луна сегодня</div>' +
+      '<div class="moon-h"><span class="moon-e" aria-hidden="true">' + m.ph.e + '</span><div><h3 class="md-t">' + esc(m.ph.n) + '</h3><div class="md-meta">Лунный день ' + m.day + ' · освещена на ' + m.lit + '%</div></div></div>' +
+      '<p class="md-d">' + esc(m.ph.why) + '</p>' +
+      '<div class="moon-c">' + (c.img ? '<img src="' + c.img + '" alt="" width="64" height="64">' : '') + '<div><div class="eyebrow">Свеча на сегодня</div><div class="moon-cn">' + esc(c.name) + '</div><div class="md-meta">' + esc(c.lun) + '</div></div></div>' +
+      '<p class="md-d">' + esc(c.d) + '</p>' +
+      '<div style="display:flex"><a class="btn ghost" href="' + esc(c.link) + '" data-act="buylink" target="_blank" rel="noopener">Посмотреть в лавке</a></div>' +
+      '<div class="ov-sec"><div class="eyebrow">Мини-практика дня</div><p>' + esc(m.ph.p) + '</p></div></section>';
+  }
+
   function todayView() {
     var s = UI.sel, dt = new Date(s.y, s.m, s.d), wi = (dt.getDay() + 6) % 7;
     var mon = new Date(s.y, s.m, s.d - wi), n = S.habits.length;
@@ -1220,7 +1291,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
     return demoBanner() +
       '<div class="daybar"><button class="icon-btn" data-act="wk" data-v="-7" aria-label="Предыдущая неделя" data-k="wprev">‹</button><div class="strip">' + chips + '</div><button class="icon-btn" data-act="wk" data-v="7" aria-label="Следующая неделя" data-k="wnext">›</button></div>' +
       '<div class="todayhead"><div><div class="eyebrow">' + WD_FULL[wi] + '</div><h2 class="dateh">' + s.d + ' ' + MONTHS_G[s.m] + '</h2></div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn sm" data-act="topath" data-k="topath">' + LEVELS[levelIdx(progress().days)].n + ' · серия ' + progress().streak + '</button><span class="prog">Отмечено ' + done + ' из ' + n + '</span>' + (isToday ? '' : '<button class="btn sm" data-act="gotoday" data-k="gotoday">Вернуться к сегодня</button>') + '</div></div>' +
-      (isToday ? cardBlock + medBlock() + prayBlock() : '') + '<div class="hl">' + rows + '</div>';
+      (isToday ? cardBlock + moonBlock() + medBlock() + prayBlock() : '') + '<div class="hl">' + rows + '</div>';
   }
 
   function habitsView() {
