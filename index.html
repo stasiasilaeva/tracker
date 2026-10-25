@@ -568,6 +568,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
       '<div class="lvbar" aria-hidden="true"><i style="width:' + pct + '%"></i></div>' +
       '<p class="note">' + (nx ? 'Дней практики: ' + P.days + '. До статуса «' + nx.n + '» ещё ' + (nx.d - P.days) + '.' : 'Дней практики: ' + P.days + '. Вы достигли высшего статуса.') + '</p>' +
       '<div class="levels">' + lv + '</div></section>' +
+      circleCard() +
       '<div class="pstats"><div class="pstat"><b>' + P.streak + '</b><span>дней подряд сейчас</span></div><div class="pstat"><b>' + P.best + '</b><span>лучшая серия</span></div>' +
       '<div class="pstat"><b>' + P.marks + '</b><span>всего отметок</span></div><div class="pstat"><b>' + P.full + '</b><span>полных дней</span></div></div>' +
       '<section class="card stack"><div class="card-t" style="margin:0"><span class="eyebrow">Награды</span><span class="note">' + got + ' из ' + ACH.length + '</span></div><div class="agrid">' + cards + '</div></section>' +
@@ -882,6 +883,38 @@ table.g { border-collapse: separate; border-spacing: 0; }
       }
     }).catch(function () {});
   }
+  /* ---------- профиль «Ближний Круг» ---------- */
+  var PROF = null;
+  function circleCard() {
+    if (!remOn() || S.demo) return '';
+    var body, head = '<div class="eyebrow">Ближний Круг</div>';
+    if (PROF && PROF.linked && PROF.member) body = '<div class="stname">' + esc(PROF.level) + '</div><p class="note">Ваш кэшбэк: ' + (Number(PROF.pct) || 0) + '%</p>';
+    else if (PROF && PROF.linked) body = '<div class="stname">Статус приостановлен</div><p class="note">Он вернётся, когда появится новая оплата. Подробности в разделе «Как это работает».</p>';
+    else body = '<p class="lead">Ближний Круг — тёплое спасибо тем, кто со мной давно. Если вы уже в Круге, профиль откроется по личной ссылке от Лены.</p>';
+    return '<section class="card stack"><div>' + head + body + '</div><div style="display:flex"><button class="btn ghost" data-act="circlehow" data-k="circlehow">Как это работает</button></div></section>';
+  }
+  function openCircleHow() {
+    ovMode = 'circle';
+    ovEl.innerHTML = '<div class="ov-in">' + X_BTN + '<div class="eyebrow ov-e">Ближний Круг</div><h2 class="ov-name">Как работает Ближний Круг</h2>' +
+      '<div class="ov-txt">' +
+      '<p class="md-d">Ближний Круг — это моё тёплое «спасибо» тем, кто со мной давно и регулярно.</p>' +
+      '<div class="ov-sec"><div class="eyebrow">Как попасть</div><p>Нужно три покупки, и последняя оплата не старше трёх месяцев.</p></div>' +
+      '<div class="ov-sec"><div class="eyebrow">Что даёт</div><p>Кэшбэк бонусными баллами с каждой новой покупки. Особые условия: бесплатный вход на очные мероприятия, приоритет и выгодная цена на ритуалы «Колеса Года», «Настину пятницу» и участие в создании курсов.</p></div>' +
+      '<div class="ov-sec"><div class="eyebrow">Уровни Рода</div><p>Гостья Рода, Родная Рода, Хранительница Рода, Старейшина Рода, Матриарх Рода. Уровень зависит от суммы оплат за всё время со всех площадок. Чем выше уровень, тем больше кэшбэк. Свой уровень и процент видно в профиле.</p></div>' +
+      '<div class="ov-sec"><p>Если оплат не было больше трёх месяцев, статус и кэшбэк приостанавливаются.</p></div>' +
+      '<button class="btn ghost" data-act="closecard" data-k="closecard2" style="align-self:center">Закрыть</button></div></div>';
+    ovOpen();
+  }
+  function profBoot() {
+    if (!remOn()) return;
+    var tok = '';
+    try { var sp = TG.initDataUnsafe && TG.initDataUnsafe.start_param; if (sp && sp.indexOf('p_') === 0) tok = sp.slice(2); } catch (e) {}
+    var req = tok ? remCall('/api/profile-link', { token: tok }) : remCall('/api/profile', {});
+    req.then(function (r) {
+      if (r && r.ok) { PROF = r; render(); if (tok) toast([r.member ? 'Профиль Ближнего Круга открыт.' : 'Профиль подключён.']); return; }
+      if (tok) toast([r && r.error === 'used' ? 'Эта ссылка уже подключена к другому аккаунту. Напишите в службу заботы.' : 'Ссылка не найдена. Попросите Лену прислать её ещё раз.']);
+    }).catch(function () { if (tok) toast(['Не удалось подключиться. Откройте ссылку ещё раз.']); });
+  }
   function medBoot() {
     if (!remOn() || !PAID) return;
     var code = '';
@@ -962,6 +995,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
   }
   function remBoot() {
     medBoot();
+    profBoot();
     var o = null; try { o = new URLSearchParams(location.search).get('o'); } catch (e) {}
     if (o === 'card') { hit('card'); try { history.replaceState(null, '', location.pathname); } catch (e) {} UI.tab = 'today'; render(); openCard(); }
     if (!remOn()) return;
@@ -1239,6 +1273,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
     var a = t.dataset.act, hid = t.dataset.hid;
     if (a === 'retry') { load(); return; }
     if (a === 'closecard') { closeCard(); return; }
+    if (a === 'circlehow') { openCircleHow(); return; }
     if (a === 'flip') { if (!todayCardN()) drawCard(); return; }
     if (a === 'buylink') hit('shop');
     if (a === 'buylink' && inTG && TG.openLink) { e.preventDefault(); try { TG.openLink(t.href); } catch (x) { location.href = t.href; } return; }
