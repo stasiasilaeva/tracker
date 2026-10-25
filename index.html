@@ -893,7 +893,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
   /* ---------- профиль «Ближний Круг» ---------- */
   var PROF = null;
   function circleCard() {
-    if (!remOn() || S.demo) return '';
+    if (!remOn()) return '';
     var body, head = '<div class="eyebrow">Ближний Круг</div>';
     if (PROF && PROF.linked && PROF.member) body = '<div class="stname">' + esc(PROF.level) + '</div><p class="note">Ваш кэшбэк: ' + (Number(PROF.pct) || 0) + '%</p>';
     else if (PROF && PROF.linked) body = '<div class="stname">Статус приостановлен</div><p class="note">Он вернётся, когда появится новая оплата. Подробности в разделе «Как это работает».</p>';
