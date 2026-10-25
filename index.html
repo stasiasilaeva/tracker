@@ -571,11 +571,11 @@ table.g { border-collapse: separate; border-spacing: 0; }
         (ok ? '' : '<div class="pv">' + Math.min(v, a.g) + ' из ' + a.g + '</div><div class="pg"><i style="width:' + w + '%"></i></div>') + '</div>';
     }).join('');
     return demoBanner() +
-      '<section class="card stack"><div><div class="eyebrow">Ваш статус</div><div class="stname">' + L.n + '</div></div>' +
+      circleCard() +
+      '<section class="card stack"><div><div class="eyebrow">Ваш путь практики</div><div class="stname">' + L.n + '</div></div>' +
       '<div class="lvbar" aria-hidden="true"><i style="width:' + pct + '%"></i></div>' +
       '<p class="note">' + (nx ? 'Дней практики: ' + P.days + '. До статуса «' + nx.n + '» ещё ' + (nx.d - P.days) + '.' : 'Дней практики: ' + P.days + '. Вы достигли высшего статуса.') + '</p>' +
       '<div class="levels">' + lv + '</div></section>' +
-      circleCard() +
       '<div class="pstats"><div class="pstat"><b>' + P.streak + '</b><span>дней подряд сейчас</span></div><div class="pstat"><b>' + P.best + '</b><span>лучшая серия</span></div>' +
       '<div class="pstat"><b>' + P.marks + '</b><span>всего отметок</span></div><div class="pstat"><b>' + P.full + '</b><span>полных дней</span></div></div>' +
       '<section class="card stack"><div class="card-t" style="margin:0"><span class="eyebrow">Награды</span><span class="note">' + got + ' из ' + ACH.length + '</span></div><div class="agrid">' + cards + '</div></section>' +
