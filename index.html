@@ -272,6 +272,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
 .pr-text { text-align: center; font-family: var(--serif); font-size: 22px; line-height: 1.65; white-space: pre-line; color: var(--tx); padding: 8px 4px; }
 /* медитации */
 .wh-p { margin: 0 0 8px; }
+.wh-i { width: 52px; height: 52px; flex: none; fill: none; stroke: var(--gold); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .moon-h { display: flex; align-items: center; gap: 14px; }
 .moon-e { font-size: 44px; line-height: 1; }
 .moon-c { display: flex; align-items: center; gap: 12px; }
@@ -1313,6 +1314,17 @@ table.g { border-collapse: separate; border-spacing: 0; }
     2029: { ostara: [2, 20], litha: [5, 21], mabon: [8, 22], yule: [11, 21] },
     2030: { ostara: [2, 20], litha: [5, 21], mabon: [8, 22], yule: [11, 21] }
   };
+  var WICON = {
+    samhain: '<path d="M18 22h12v18H18z"/><path d="M14 40h20"/><path d="M24 22v-3"/><path d="M24 7c4 4 5 7 5 9a5 5 0 0 1-10 0c0-2 1-5 5-9z"/>',
+    yule: '<path d="M8 34h32"/><path d="M14 34a10 10 0 0 1 20 0"/><path d="M24 14v4M10.5 21.5l3 3M37.5 21.5l-3 3M5 34h0M43 34h0"/><path d="M14 40h20"/>',
+    imbolc: '<path d="M24 42V20"/><path d="M24 36c-5 0-8-3-9-7 5 0 8 3 9 7z"/><path d="M24 20c-6-1-8-6-6-10 3-1 6 1 6 4 0-3 3-5 6-4 2 4 0 9-6 10z"/>',
+    ostara: '<path d="M24 6c8 0 13 11 13 20a13 13 0 0 1-26 0C11 17 16 6 24 6z"/><path d="M11.5 26l4.5-4 4 4 4-4 4 4 4-4 4.5 4"/><path d="M13 33l4-3 4 3 4-3 4 3 4-3"/>',
+    beltane: '<circle cx="24" cy="24" r="4"/><path d="M24 20c-4-3-4-9 0-12 4 3 4 9 0 12zM28 24c3-4 9-4 12 0-3 4-9 4-12 0zM24 28c4 3 4 9 0 12-4-3-4-9 0-12zM20 24c-3 4-9 4-12 0 3-4 9-4 12 0z"/>',
+    litha: '<circle cx="24" cy="24" r="8"/><path d="M24 5v6M24 37v6M5 24h6M37 24h6M10.5 10.5l4.2 4.2M33.3 33.3l4.2 4.2M10.5 37.5l4.2-4.2M33.3 14.7l4.2-4.2"/>',
+    lughnasadh: '<path d="M24 42V16"/><path d="M24 14c-3-2-3-6 0-8 3 2 3 6 0 8z"/><path d="M24 22c-5 0-8-3-8-7 5 0 8 3 8 7zM24 22c5 0 8-3 8-7-5 0-8 3-8 7z"/><path d="M24 30c-5 0-8-3-8-7 5 0 8 3 8 7zM24 30c5 0 8-3 8-7-5 0-8 3-8 7z"/>',
+    mabon: '<path d="M24 5c13 8 15 22 0 37C9 27 11 13 24 5z"/><path d="M24 12v33"/><path d="M24 22l-7-4M24 22l7-4M24 31l-8-4M24 31l8-4"/>'
+  };
+  function wheelIcon(id) { return WICON[id] ? '<svg class="wh-i" viewBox="0 0 48 48" aria-hidden="true">' + WICON[id] + '</svg>' : ''; }
   function wheelDate(w, y) {
     if (w.fix) return new Date(y, w.fix[0], w.fix[1]);
     var a = ASTRO[y] || { ostara: [2, 20], litha: [5, 21], mabon: [8, 22], yule: [11, 21] };
@@ -1332,7 +1344,7 @@ table.g { border-collapse: separate; border-spacing: 0; }
     var r = wheelNow(); if (!r) return '';
     var w = r.w, when = r.diff === 0 ? 'Сегодня' : (r.diff === 1 ? 'Завтра' : (r.diff < 0 ? 'Вчера' : 'Через ' + r.diff + ' ' + plural(r.diff, 'день', 'дня', 'дней')));
     return '<section class="card stack"><div class="eyebrow">Колесо Года · ' + when + ', ' + r.date.getDate() + ' ' + MONTHS_G[r.date.getMonth()] + '</div>' +
-      '<div><h3 class="md-t">' + esc(w.n) + '</h3><div class="md-meta">' + esc(w.sub) + '</div></div>' +
+      '<div class="moon-h">' + wheelIcon(w.id) + '<div><h3 class="md-t">' + esc(w.n) + '</h3><div class="md-meta">' + esc(w.sub) + '</div></div></div>' +
       '<p class="md-d">' + esc(w.d) + '</p>' +
       '<div class="ov-sec"><div class="eyebrow">Что можно сделать</div>' + w.pr.map(function (t) { return '<p class="wh-p">· ' + esc(t) + '</p>'; }).join('') + '</div>' +
       '<div class="moon-cn">' + esc(w.c.name) + '</div>' +
