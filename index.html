@@ -1253,8 +1253,10 @@ table.g { border-collapse: separate; border-spacing: 0; }
   function moonInfo() {
     var age = moonAge(new Date(TY, TM, TD));
     var i = age < 1.85 || age >= 27.68 ? 0 : Math.min(7, Math.floor((age - 1.85) / 3.69) + 1);
-    var ph = MOON[i];
-    return { age: age, ph: ph, day: Math.min(30, Math.floor(age) + 1), lit: Math.round((1 - Math.cos(2 * Math.PI * age / SYN)) / 2 * 100), candle: CANDLES[ph.pool[Math.floor(age) % ph.pool.length]] };
+    var full = Math.abs(age - SYN / 2) < 0.5;
+    if (i === 4 && !full) i = age < SYN / 2 ? 3 : 5;
+    var ph = MOON[i], lit = (1 - Math.cos(2 * Math.PI * age / SYN)) / 2 * 100;
+    return { age: age, ph: ph, day: Math.min(30, Math.floor(age) + 1), lit: full ? 100 : Math.min(99, Math.floor(lit)), candle: CANDLES[ph.pool[Math.floor(age) % ph.pool.length]] };
   }
   function moonBlock() {
     var m = moonInfo(), c = m.candle;
