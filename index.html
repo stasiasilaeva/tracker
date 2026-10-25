@@ -897,8 +897,9 @@ table.g { border-collapse: separate; border-spacing: 0; }
     var body, head = '<div class="eyebrow">Ближний Круг</div>';
     if (PROF && PROF.linked && PROF.member) body = '<div class="stname">' + esc(PROF.level) + '</div><p class="note">Ваш кэшбэк: ' + (Number(PROF.pct) || 0) + '%</p>';
     else if (PROF && PROF.linked) body = '<div class="stname">Статус приостановлен</div><p class="note">Он вернётся, когда появится новая оплата. Подробности в разделе «Как это работает».</p>';
-    else body = '<p class="lead">Ближний Круг — тёплое спасибо тем, кто со мной давно. Если вы уже в Круге, профиль откроется по личной ссылке от Лены.</p>';
-    return '<section class="card stack"><div>' + head + body + '</div><div style="display:flex"><button class="btn ghost" data-act="circlehow" data-k="circlehow">Как это работает</button></div></section>';
+    else body = '<p class="lead">Ближний Круг — тёплое спасибо тем, кто со мной давно. Если вы уже в Круге, профиль откроется по личной ссылке от Лены.</p>' + (PROF_ERR ? '<p class="note">' + esc(PROF_ERR) + '</p>' : '');
+    var linked = PROF && PROF.linked;
+    return '<section class="card stack"><div>' + head + body + '</div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" data-act="circlehow" data-k="circlehow">Как это работает</button>' + (linked ? '' : '<button class="btn ghost" data-act="profcode" data-k="profcode">У меня есть ссылка</button>') + '</div></section>';
   }
   function openCircleHow() {
     ovMode = 'circle';
@@ -912,15 +913,43 @@ table.g { border-collapse: separate; border-spacing: 0; }
       '<button class="btn ghost" data-act="closecard" data-k="closecard2" style="align-self:center">Закрыть</button></div></div>';
     ovOpen();
   }
+  var PROF_ERR = '';
+  function profTok(v) {
+    v = String(v || '').trim();
+    if (/^[A-Za-z0-9_-]{12,40}$/.test(v)) return v;
+    var m = v.match(/startapp=p_([A-Za-z0-9_-]{12,40})/) || v.match(/tgWebAppStartParam=p_([A-Za-z0-9_-]{12,40})/);
+    return m ? m[1] : '';
+  }
+  function profStore(k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) {} }
+  function profRead(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function profLink(tok, manual) {
+    return remCall('/api/profile-link', { token: tok }).then(function (r) {
+      if (r && r.ok) { PROF = r; PROF_ERR = ''; profStore('pt_pend', ''); render(); toast([r.member ? 'Профиль Ближнего Круга открыт.' : 'Профиль подключён.']); if (manual) closeCard(); return; }
+      if (r && r.error === 'used') { PROF_ERR = 'Эта ссылка уже подключена к другому аккаунту Telegram. Напишите в службу заботы.'; profStore('pt_pend', ''); }
+      else { PROF_ERR = 'Ссылка не найдена. Попросите Лену прислать её ещё раз.'; profStore('pt_pend', ''); }
+      if (manual) { var el = document.getElementById('pcmsg'); if (el) el.textContent = PROF_ERR; } else render();
+    }).catch(function () {
+      PROF_ERR = 'Не удалось подключиться. Откройте приложение ещё раз, ссылка сохранена.';
+      if (manual) { var el = document.getElementById('pcmsg'); if (el) el.textContent = PROF_ERR; } else render();
+    });
+  }
+  function openProfCode(msg) {
+    ovMode = 'profcode';
+    ovEl.innerHTML = '<div class="ov-in">' + X_BTN + '<div class="eyebrow ov-e">Ближний Круг</div><h2 class="ov-name">Подключить профиль</h2>' +
+      '<p class="md-d" style="text-align:center">Вставьте ссылку, которую прислала Лена, или её часть после «p_».</p>' +
+      '<input class="cd-in" id="pcin" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ссылка">' +
+      '<p class="note" id="pcmsg" style="text-align:center">' + esc(msg || '') + '</p>' +
+      '<div style="display:flex;gap:10px;justify-content:center"><button class="btn primary" data-act="profapply" data-k="profapply">Подключить</button><button class="btn ghost" data-act="closecard" data-k="closecard3">Закрыть</button></div></div>';
+    ovOpen();
+  }
   function profBoot() {
     if (!remOn()) return;
     var tok = '';
-    try { var sp = TG.initDataUnsafe && TG.initDataUnsafe.start_param; if (sp && sp.indexOf('p_') === 0) tok = sp.slice(2); } catch (e) {}
-    var req = tok ? remCall('/api/profile-link', { token: tok }) : remCall('/api/profile', {});
-    req.then(function (r) {
-      if (r && r.ok) { PROF = r; render(); if (tok) toast([r.member ? 'Профиль Ближнего Круга открыт.' : 'Профиль подключён.']); return; }
-      if (tok) toast([r && r.error === 'used' ? 'Эта ссылка уже подключена к другому аккаунту. Напишите в службу заботы.' : 'Ссылка не найдена. Попросите Лену прислать её ещё раз.']);
-    }).catch(function () { if (tok) toast(['Не удалось подключиться. Откройте ссылку ещё раз.']); });
+    try { var sp = TG.initDataUnsafe && TG.initDataUnsafe.start_param; if (sp && sp.indexOf('p_') === 0) tok = profTok(sp.slice(2)); } catch (e) {}
+    if (!tok) tok = profTok(location.hash) || profTok(location.search);
+    if (tok) profStore('pt_pend', tok); else tok = profRead('pt_pend');
+    if (tok) { profLink(tok, false); return; }
+    remCall('/api/profile', {}).then(function (r) { if (r && r.ok) { PROF = r; render(); } }).catch(function () {});
   }
   function medBoot() {
     if (!remOn() || !PAID) return;
@@ -1429,6 +1458,8 @@ table.g { border-collapse: separate; border-spacing: 0; }
     if (a === 'retry') { load(); return; }
     if (a === 'closecard') { closeCard(); return; }
     if (a === 'circlehow') { openCircleHow(); return; }
+    if (a === 'profcode') { openProfCode(); return; }
+    if (a === 'profapply') { var pi = document.getElementById('pcin'); var pt = pi ? profTok(pi.value) : ''; if (pt) profLink(pt, true); else { var pm = document.getElementById('pcmsg'); if (pm) pm.textContent = 'Не вижу ссылку. Вставьте её целиком.'; } return; }
     if (a === 'flip') { if (!todayCardN()) drawCard(); return; }
     if (a === 'buylink') hit('shop');
     if (a === 'buylink' && inTG && TG.openLink) { e.preventDefault(); try { TG.openLink(t.href); } catch (x) { location.href = t.href; } return; }
