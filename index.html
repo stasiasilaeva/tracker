@@ -928,8 +928,10 @@ table.g { border-collapse: separate; border-spacing: 0; }
       if (r && r.error === 'used') { PROF_ERR = 'Эта ссылка уже подключена к другому аккаунту Telegram. Напишите в службу заботы.'; profStore('pt_pend', ''); }
       else { PROF_ERR = 'Ссылка не найдена. Попросите Лену прислать её ещё раз.'; profStore('pt_pend', ''); }
       if (manual) { var el = document.getElementById('pcmsg'); if (el) el.textContent = PROF_ERR; } else render();
-    }).catch(function () {
-      PROF_ERR = 'Не удалось подключиться. Откройте приложение ещё раз, ссылка сохранена.';
+    }).catch(function (e) {
+      PROF_ERR = e && e.code === 'net' ? 'Нет связи с сервером. Если вы на мобильном интернете, попробуйте Wi-Fi. Ссылка сохранена.'
+        : (e && e.code === 'resp' ? 'Сервер ответил неожиданно (код ' + e.status + '). Попробуйте позже, ссылка сохранена.'
+        : 'Не удалось подключиться (' + String(e && e.message || 'ошибка').slice(0, 60) + '). Ссылка сохранена.');
       if (manual) { var el = document.getElementById('pcmsg'); if (el) el.textContent = PROF_ERR; } else render();
     });
   }
@@ -995,7 +997,9 @@ table.g { border-collapse: separate; border-spacing: 0; }
   function curTz() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Moscow'; } catch (e) { return 'Europe/Moscow'; } }
   function remCall(path, body) {
     return fetch(REMIND_API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ initData: TG.initData }, body)) })
-      .then(function (r) { return r.json(); });
+      .then(function (r) {
+        return r.json().catch(function () { var e = new Error('resp'); e.code = 'resp'; e.status = r.status; throw e; });
+      }, function () { var e = new Error('net'); e.code = 'net'; throw e; });
   }
   /* статистика: одно событие отправляется не чаще раза в день */
   var hitSent = {};
